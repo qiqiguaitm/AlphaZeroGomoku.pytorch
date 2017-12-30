@@ -166,7 +166,7 @@ class TrainPipeline():
         self.win_queue = manager.Queue(maxsize=self.n_games_eval)
         self.job_queue = manager.Queue(maxsize=self.n_games_eval)
         procs = []
-        for i in range(4):
+        for i in range(self.n_games_eval):
             start_role = i % 2
             args = (self.win_queue, self.job_queue,
                     self.game, start_role,
@@ -195,7 +195,7 @@ class TrainPipeline():
         """run the training pipeline"""
         manager = multiprocessing.Manager()
         self.data_queue = manager.Queue(maxsize=5120)
-        NUM_PROCESS = 2
+        NUM_PROCESS = 12
         procs = []
         for i in range(NUM_PROCESS):
             proc = multiprocessing.Process(target=collect_selfplay_data,
