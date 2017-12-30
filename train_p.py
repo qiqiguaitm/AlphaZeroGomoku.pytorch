@@ -42,7 +42,7 @@ def get_equi_data(play_data, board_height, board_width):
     return extend_data
 
 
-def collect_selfplay_data(data_queue, game,
+def collect_selfplay_data(data_queue,data_queue_lock,game,
                           board_width, board_height,
                           c_puct, n_playout, temp,
                           model_file, n_games=1):
@@ -57,8 +57,10 @@ def collect_selfplay_data(data_queue, game,
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
             # augment the data
             play_data = get_equi_data(play_data, board_width, board_height)
+            data_queue_lock.acquire()
             for data in play_data:
                 data_queue.put(data)
+            data_queue_lock.release()
         if os.path.exists(model_file):
             checkpoint = torch.load(model_file)
         else:
@@ -68,7 +70,7 @@ def collect_selfplay_data(data_queue, game,
                                  n_playout=n_playout, is_selfplay=1)
 
 
-def policy_evaluate(win_queue, job_queue, game, role,
+def policy_evaluate(win_queue, job_queue,job_queue_lock, game, role,
                     board_width, board_height,
                     c_puct, n_playout, pure_mcts_playout_num,
                     model_file):
@@ -86,7 +88,9 @@ def policy_evaluate(win_queue, job_queue, game, role,
                                          n_playout=n_playout)
         pure_mcts_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
         winner = game.start_play(current_mcts_player, pure_mcts_player, start_player=role, is_shown=0)
+        job_queue_lock.acquire()
         win_queue.put(winner)
+        job_queue_lock.release()
 
 
 class TrainPipeline():
@@ -166,11 +170,12 @@ class TrainPipeline():
         manager = multiprocessing.Manager()
         self.win_queue = manager.Queue(maxsize=self.n_games_eval)
         self.job_queue = manager.Queue(maxsize=self.n_games_eval)
+        self.job_queue_lock = manager.Lock()
         procs = []
-        NUM_PROCESS = 4
+        NUM_PROCESS = self.n_games_eval
         for i in range(NUM_PROCESS):
             start_role = i % 2
-            args = (self.win_queue, self.job_queue,
+            args = (self.win_queue, self.job_queue,self.job_queue_lock,
                     self.game, start_role,
                     self.board_width, self.board_height,
                     self.c_puct, self.n_playout, self.pure_mcts_playout_num,
@@ -181,8 +186,10 @@ class TrainPipeline():
         self.eval_procs = procs
 
     def get_win_ratio(self):
+        self.job_queue_lock.acquire()
         for i in range(self.n_games_eval):
             self.job_queue.put(1)
+        self.job_queue_lock.release()
         win_cnt = defaultdict(int)
         for i in range(self.n_games_eval):
             winner = self.win_queue.get()
@@ -197,12 +204,12 @@ class TrainPipeline():
         """run the training pipeline"""
         manager = multiprocessing.Manager()
         self.data_queue = manager.Queue(maxsize=5120)
-        NUM_PROCESS = 12
-        NUM_PROCESS = 4
+        self.data_queue_lock = manager.Lock()
+        NUM_PROCESS = 24
         procs = []
         for i in range(NUM_PROCESS):
             proc = multiprocessing.Process(target=collect_selfplay_data,
-                                           args=(self.data_queue, self.game,
+                                           args=(self.data_queue, self.data_queue_lock,self.game,
                                                  self.board_width, self.board_height,
                                                  self.c_puct, self.n_playout, self.temp,
                                                  self.model_file, 1,))
