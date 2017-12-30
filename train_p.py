@@ -51,9 +51,10 @@ def collect_selfplay_data(data_queue, game,
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
     while True:
+        while data_queue.qsize() > 512*10:
+            time.sleep(1)
         for i in range(n_games):
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
-            episode_len = len(play_data)
             # augment the data
             play_data = get_equi_data(play_data, board_width, board_height)
             for data in play_data:
@@ -166,7 +167,8 @@ class TrainPipeline():
         self.win_queue = manager.Queue(maxsize=self.n_games_eval)
         self.job_queue = manager.Queue(maxsize=self.n_games_eval)
         procs = []
-        for i in range(self.n_games_eval):
+        NUM_PROCESS = 4
+        for i in range(NUM_PROCESS):
             start_role = i % 2
             args = (self.win_queue, self.job_queue,
                     self.game, start_role,
@@ -196,6 +198,7 @@ class TrainPipeline():
         manager = multiprocessing.Manager()
         self.data_queue = manager.Queue(maxsize=5120)
         NUM_PROCESS = 12
+        NUM_PROCESS = 4
         procs = []
         for i in range(NUM_PROCESS):
             proc = multiprocessing.Process(target=collect_selfplay_data,
@@ -211,12 +214,14 @@ class TrainPipeline():
         try:
             for i in range(self.game_batch_num):
                 t1 = time.time()
+                cnt = 0
                 while True:
                     while self.data_queue.empty():
                         time.sleep(1)
                     item = self.data_queue.get()
                     self.data_buffer.append(item)
-                    if len(self.data_buffer) > self.batch_size:
+                    cnt = cnt + 1
+                    if cnt > self.batch_size:
                         break
                 t2 = time.time()
                 print("batch i:{}, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(self.data_buffer), t2 - t1))
