@@ -47,7 +47,9 @@ class PolicyValueBackBoneNet(nn.Module):
         self.value_head_conv1 = BasicConv2d(128, 2, 1, 1, 0, use_batchnorm=False, bias=False)
         self.value_head_fc1 = nn.Linear(2 * self.num_actions, 64)
         self.value_head = nn.Linear(64, 1)
+        self.resume(checkpoint)
 
+    def resume(self, checkpoint):
         if checkpoint is not None:
             if checkpoint['state_dict'].keys()[0].startswith('module.') and \
                     checkpoint['state_dict'].keys()[-1].startswith('module.'):
@@ -84,6 +86,9 @@ class PolicyValueNet(object):
     def create_policy_value_net(self):
         self.policy_value_model = PolicyValueBackBoneNet(self.board_height * self.board_width, self.checkpoint)
         self.policy_value_model.cuda()
+
+    def resume(self,checkpoint):
+        self.policy_value_model.resume(checkpoint)
 
     def policy_value_fn(self, board):
         """
