@@ -42,16 +42,17 @@ def get_equi_data(play_data, board_height, board_width):
     return extend_data
 
 
-def collect_selfplay_data(data_queue,data_queue_lock,game,
+def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
                           board_width, board_height,
                           c_puct, n_playout, temp,
                           model_file, n_games=1):
     """collect self-play data for training"""
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     policy_value_net = PolicyValueNet(board_width, board_height)
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
     while True:
-        while data_queue.qsize() > 512*10:
+        while data_queue.qsize() > 512 * 10:
             time.sleep(1)
         for i in range(n_games):
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
@@ -70,7 +71,7 @@ def collect_selfplay_data(data_queue,data_queue_lock,game,
                                  n_playout=n_playout, is_selfplay=1)
 
 
-def policy_evaluate(win_queue, job_queue,job_queue_lock, game, role,
+def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
                     board_width, board_height,
                     c_puct, n_playout, pure_mcts_playout_num,
                     model_file):
@@ -78,6 +79,7 @@ def policy_evaluate(win_queue, job_queue,job_queue_lock, game, role,
     Evaluate the trained policy by playing games against the pure MCTS player
     Note: this is only for monitoring the progress of training
     """
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     while True:
         while job_queue.empty():
             time.sleep(1)
@@ -119,6 +121,8 @@ class TrainPipeline():
         self.best_win_ratio = 0.0
         # num of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
         self.pure_mcts_playout_num = 1000
+        self.gpus = ['0', '1', '2', '3']
+        self.num_inst = 0
         self.model_file = 'checkpoint.pth.tar'
         self.best_model_name = 'checkpoint_best.pth.tar'
         # start training from a given policy-value net
@@ -127,6 +131,9 @@ class TrainPipeline():
         # start training from a new policy-value net
 
     def init_model(self):
+        gpu_id = self.gpus[(self.num_inst + 1) % len(self.gpus)]
+        self.num_inst += 1
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         self.policy_value_net = PolicyValueNet(self.board_width, self.board_height)
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                       n_playout=self.n_playout, is_selfplay=1)
@@ -173,9 +180,11 @@ class TrainPipeline():
         self.job_queue_lock = manager.Lock()
         procs = []
         NUM_PROCESS = self.n_games_eval
-        for i in range(NUM_PROCESS):
-            start_role = i % 2
-            args = (self.win_queue, self.job_queue,self.job_queue_lock,
+        for idx in range(NUM_PROCESS):
+            start_role = idx % 2
+            gpu_id = self.gpus[(idx + self.num_inst) % len(self.gpus)]
+            self.num_inst += 1
+            args = (gpu_id, self.win_queue, self.job_queue, self.job_queue_lock,
                     self.game, start_role,
                     self.board_width, self.board_height,
                     self.c_puct, self.n_playout, self.pure_mcts_playout_num,
@@ -207,9 +216,11 @@ class TrainPipeline():
         self.data_queue_lock = manager.Lock()
         NUM_PROCESS = 24
         procs = []
-        for i in range(NUM_PROCESS):
+        for idx in range(NUM_PROCESS):
+            gpu_id = self.gpus[(idx + self.num_inst) % len(self.gpus)]
+            self.num_inst += 1
             proc = multiprocessing.Process(target=collect_selfplay_data,
-                                           args=(self.data_queue, self.data_queue_lock,self.game,
+                                           args=(gpu_id, self.data_queue, self.data_queue_lock, self.game,
                                                  self.board_width, self.board_height,
                                                  self.c_puct, self.n_playout, self.temp,
                                                  self.model_file, 1,))
@@ -237,8 +248,8 @@ class TrainPipeline():
                          'optim_dict': self.policy_value_net.optimizer.state_dict(),
                          'loss': loss,
                          'entropy': entropy}
-                torch.save(state, self.model_file+'.undone')
-                shutil.move(self.model_file+'.undone',self.model_file)
+                torch.save(state, self.model_file + '.undone')
+                shutil.move(self.model_file + '.undone', self.model_file)
                 # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
                     t1 = time.time()
