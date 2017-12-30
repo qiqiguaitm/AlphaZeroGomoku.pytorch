@@ -237,7 +237,8 @@ class TrainPipeline():
                          'optim_dict': self.policy_value_net.optimizer.state_dict(),
                          'loss': loss,
                          'entropy': entropy}
-                torch.save(state, self.model_file)
+                torch.save(state, self.model_file+'.undone')
+                shutil.move(self.model_file+'.undone',self.model_file)
                 # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
                     t1 = time.time()
