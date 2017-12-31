@@ -52,7 +52,7 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
     while True:
-        while data_queue.qsize() > 512 * 10:
+        while data_queue.qsize() > 512 * 20:
             time.sleep(1)
         for i in range(n_games):
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
@@ -101,8 +101,8 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
 class TrainPipeline():
     def __init__(self):
         # params of the board and the game
-        self.board_width = 8
-        self.board_height = 8
+        self.board_width = 19
+        self.board_height = 19
         self.n_in_row = 5
         self.board = Board(width=self.board_width, height=self.board_height, n_in_row=self.n_in_row)
         self.game = Game(self.board)
@@ -113,7 +113,7 @@ class TrainPipeline():
         self.n_playout = 400  # num of simulations for each move
         self.c_puct = 5
         self.buffer_size = 10000
-        self.batch_size = 512  # mini-batch size for training
+        self.batch_size = 2048  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.play_batch_size = 1
         self.epochs = 5  # num of train_steps for each update
@@ -242,7 +242,7 @@ class TrainPipeline():
                     item = self.data_queue.get()
                     self.data_buffer.append(item)
                     cnt = cnt + 1
-                    if cnt > self.batch_size:
+                    if cnt > 512:
                         break
                 t2 = time.time()
                 print("batch i:{}, data_queue_size:{},time_used:{:.3f}".format(i + 1, self.data_queue.qsize(), t2 - t1))
