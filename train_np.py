@@ -137,9 +137,7 @@ class TrainPipeline():
         self.manager = multiprocessing.Manager()
 
     def init_model(self):
-        gpu_id = self.gpus[self.num_inst % len(self.gpus)]
-        self.num_inst += 1
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.gpus)
         self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, self.feature_planes)
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                       n_playout=self.n_playout, is_selfplay=1)
