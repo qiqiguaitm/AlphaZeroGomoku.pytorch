@@ -55,7 +55,7 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                           is_distributed=False, data_server_url=DIST_DATA_URL):
     """collect self-play data for training"""
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-    time.sleep(int(pid) * 3)
+    time.sleep(int(pid) * 5)
     n_epoch = 0
     while True:
         if is_distributed:
