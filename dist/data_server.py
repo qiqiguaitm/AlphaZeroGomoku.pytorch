@@ -292,9 +292,9 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         })
 
 
-def test(HandlerClass = SimpleHTTPRequestHandler,
+def start_server(HandlerClass = SimpleHTTPRequestHandler,
          ServerClass = BaseHTTPServer.HTTPServer):
     BaseHTTPServer.test(HandlerClass, ServerClass)
 
 if __name__ == '__main__':
-    test()
+    start_server()

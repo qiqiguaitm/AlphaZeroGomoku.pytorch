@@ -2,6 +2,7 @@ import os
 import shutil
 import uuid
 import cPickle as pickle
+import time
 
 TunnelPath=os.path.join(os.path.dirname(os.path.realpath(__file__)),'data/')
 if not os.path.exists(TunnelPath):
@@ -11,16 +12,22 @@ def touch(fname):
     open(fname, 'a').close()
     os.utime(fname, None)
 
-
-data_server_url = 'http://10.83.150.55:8000/'
-
 def upload(data_server_url,file_path):
     cmd_upload = 'curl -F "file=@%s" %s'%(file_path,data_server_url)
     os.system(cmd_upload)
 
 def download(data_server_url,file_name,save_path):
-    cmd_download = 'wget %s/%s -O %s --timeout=600 '%(data_server_url,file_name,save_path)
+    if '/' in file_name:
+        file_name = os.path.split(file_name)[-1]
+    cmd_download = 'wget %s/%s -O %s --timeout=600 '%(data_server_url,file_name,save_path+'.tmp')
     os.system(cmd_download)
+    size = os.path.getsize(save_path + '.tmp')
+    if size == 0:
+        os.remove(save_path+'.tmp')
+        return False
+    else:
+        shutil.move(save_path+'.tmp',save_path)
+        return True
 
 def upload_samples(data_server_url,samples):
     tmp_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'temp/')
@@ -49,8 +56,11 @@ def download_samples():
     return samples
 
 if __name__ == '__main__':
-    s = [1,2,3]
-    upload_samples(data_server_url,s)
+    DIST_DATA_URL = 'http://10.83.150.55:8000/'
+    while True:
+        s = [1,2,3]
+        upload_samples(DIST_DATA_URL,s)
+        time.sleep(2)
 
 
     samples = download_samples()

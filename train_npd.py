@@ -23,8 +23,11 @@ import threading
 import os
 from multiprocessing import Pool
 from negamax import NegamaxPlayer
+import argparse
+from dist.client import *
+from dist.data_server import *
 
-
+DIST_DATA_URL = 'http://10.83.150.55:8000/'
 
 
 def get_equi_data(play_data, board_height, board_width):
@@ -48,7 +51,8 @@ def get_equi_data(play_data, board_height, board_width):
 def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
                           board_width, board_height, feature_planes,
                           c_puct, n_playout, temp,
-                          model_file, n_games=1):
+                          model_file, n_games=1,
+                          is_distributed=False, data_server_url=DIST_DATA_URL):
     """collect self-play data for training"""
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval')
@@ -61,13 +65,21 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
             # augment the data
             play_data = get_equi_data(play_data, board_width, board_height)
-            data_queue_lock.acquire()
-            for data in play_data:
-                data_queue.put(data)
-            data_queue_lock.release()
-        if os.path.exists(model_file):
-            checkpoint = torch.load(model_file)
-        else:
+            if is_distributed:
+                upload_samples(data_server_url, play_data)
+            else:
+                data_queue_lock.acquire()
+                for data in play_data:
+                    data_queue.put(data)
+                data_queue_lock.release()
+        if is_distributed:
+            download(data_server_url, model_file)
+        try:
+            if os.path.exists(model_file):
+                checkpoint = torch.load(model_file)
+            else:
+                checkpoint = None
+        except:
             checkpoint = None
 
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
@@ -86,6 +98,7 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
     """
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     while True:
+
         while job_queue.empty():
             time.sleep(1)
         job_queue.get()
@@ -194,7 +207,7 @@ class TrainPipeline():
                     self.game, start_role,
                     self.board_width, self.board_height, self.feature_planes,
                     self.c_puct, self.n_playout, self.pure_mcts_playout_num,
-                    self.model_file,)
+                    self.model_file)
             proc = multiprocessing.Process(target=policy_evaluate, args=args)
             procs.append(proc)
             proc.start()
@@ -215,7 +228,7 @@ class TrainPipeline():
                                                                   win_cnt[-1]))
         return win_ratio
 
-    def collect_selfplay_data(self):
+    def collect_selfplay_data(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         """run the training pipeline"""
         self.data_queue = self.manager.Queue(maxsize=5120)
         self.data_queue_lock = self.manager.Lock()
@@ -225,27 +238,38 @@ class TrainPipeline():
             gpu_id = self.gpus[self.num_inst % len(self.gpus)]
             self.num_inst += 1
             proc = multiprocessing.Process(target=collect_selfplay_data,
-                                           args=(gpu_id, self.data_queue, self.data_queue_lock, self.game,
-                                                 self.board_width, self.board_height, self.feature_planes,
+                                           args=(gpu_id, self.data_queue, self.data_queue_lock,
+                                                 self.game,self.board_width, self.board_height, self.feature_planes,
                                                  self.c_puct, self.n_playout, self.temp,
-                                                 self.model_file, 1,))
+                                                 self.model_file, 1,
+                                                 is_distributed, data_server_url))
             procs.append(proc)
             proc.start()
         self.collect_procs = procs
 
-    def train(self):
+    def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         try:
             for i in range(self.game_batch_num):
                 t1 = time.time()
                 cnt = 0
-                while True:
-                    while self.data_queue.empty():
+                if is_distributed:
+                    while True:
+                        samples = download_samples()
+                        for sample in samples:
+                            self.data_buffer.append(sample)
+                            cnt = cnt + 1
+                        if cnt > self.batch_size and len(self.data_buffer) > self.batch_size:
+                            break
                         time.sleep(1)
-                    item = self.data_queue.get()
-                    self.data_buffer.append(item)
-                    cnt = cnt + 1
-                    if cnt > self.batch_size and len(self.data_buffer) > self.batch_size:
-                        break
+                else:
+                    while True:
+                        while self.data_queue.empty():
+                            time.sleep(1)
+                        item = self.data_queue.get()
+                        self.data_buffer.append(item)
+                        cnt = cnt + 1
+                        if cnt > self.batch_size and len(self.data_buffer) > self.batch_size:
+                            break
                 t2 = time.time()
                 print("batch i:{}, data_queue_size:{},time_used:{:.3f}".format(i + 1, self.data_queue.qsize(), t2 - t1))
                 loss, entropy = self.policy_update()
@@ -255,6 +279,7 @@ class TrainPipeline():
                          'entropy': entropy}
                 torch.save(state, self.model_file + '.undone')
                 shutil.move(self.model_file + '.undone', self.model_file)
+                upload(data_server_url, self.model_file)
                 # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
                     t1 = time.time()
@@ -281,11 +306,49 @@ class TrainPipeline():
             proc.join()
 
 
+# Training settings
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='AlphaZeroGomoku')
+    parser.add_argument('--is_dist', '-', metavar='DIST', default='1',
+                        choices=['1', '0'],
+                        help='run mode: dist or local')
+    parser.add_argument('--role', '-', metavar='ROLE', default='worker',
+                        choices=['worker', 'master'],
+                        help='run role: worker or master')
+    parser.add_argument('--data_server_url', '-', metavar='URL', default=DIST_DATA_URL,
+                        type=str,
+                        help='data_server_url')
+    args = parser.parse_args()
+    return args
+
+
+def main(args):
+    if args.is_dist == '0':
+        training_pipeline = TrainPipeline()
+        print('start collecting')
+        training_pipeline.collect_selfplay_data(is_distributed=False)
+        print('start evaluating')
+        training_pipeline.policy_evaluate()
+        training_pipeline.init_model()
+        print('start training')
+        training_pipeline.train(is_distributed=False)
+        training_pipeline.release()
+    elif args.is_dist == '1':
+        if args.role == 'master':
+            serv = threading.Thread(target=start_server, args=())
+            serv.setDaemon(True)
+            serv.start()
+            training_pipeline = TrainPipeline()
+            print('start evaluating')
+            training_pipeline.policy_evaluate()
+            training_pipeline.init_model()
+            print('start training')
+            training_pipeline.train(is_distributed=True, data_server_url=args.data_server_url)
+        elif args.role == 'worker':
+            training_pipeline = TrainPipeline()
+            print('start collecting')
+            training_pipeline.collect_selfplay_data(is_distributed=True, data_server_url=args.data_server_url)
+
+
 if __name__ == '__main__':
-    training_pipeline = TrainPipeline()
-    training_pipeline.collect_selfplay_data()
-    training_pipeline.policy_evaluate()
-    training_pipeline.init_model()
-    print('start training')
-    training_pipeline.train()
-    training_pipeline.release()
+    main(parse_arguments())
