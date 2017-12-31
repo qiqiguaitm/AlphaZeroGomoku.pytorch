@@ -44,7 +44,7 @@ class Human(object):
 
 def run():
     n = 5
-    width, height = 15, 15
+    width, height = 11, 11
     feature_planes = 8
     model_file = 'checkpoint_best.pth.tar'
     try:
