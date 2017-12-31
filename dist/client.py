@@ -44,11 +44,15 @@ def download_samples():
             os.remove(os.path.join(TunnelPath,f))
         except:
             continue
+    return samples
 
 if __name__ == '__main__':
     s = [1,2,3]
     upload_samples(data_server_url,s)
 
+
+    samples = download_samples()
+    print samples
 
 
 
