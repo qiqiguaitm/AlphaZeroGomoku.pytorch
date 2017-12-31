@@ -48,7 +48,7 @@ def get_equi_data(play_data, board_height, board_width):
     return extend_data
 
 
-def collect_selfplay_data(pid,gpu_id, data_queue, data_queue_lock, game,
+def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                           board_width, board_height, feature_planes,
                           c_puct, n_playout, temp,
                           model_file, n_games=1,
@@ -64,7 +64,7 @@ def collect_selfplay_data(pid,gpu_id, data_queue, data_queue_lock, game,
             while data_queue.qsize() > 512 * 20:
                 time.sleep(1)
         for n_game in range(n_games):
-            print('PID:%s,N_EPOCH:%s,N_GAME:%s start ...'%(pid,n_epoch,n_game))
+            print('PID:%s,N_EPOCH:%s,N_GAME:%s start ...' % (pid, n_epoch, n_game))
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
             print('PID:%s,N_EPOCH:%s,N_GAME:%s end.' % (pid, n_epoch, n_game))
             # augment the data
@@ -79,7 +79,7 @@ def collect_selfplay_data(pid,gpu_id, data_queue, data_queue_lock, game,
                 data_queue_lock.release()
             print('PID:%s,N_EPOCH:%s,N_GAME:%s send data end.' % (pid, n_epoch, n_game))
         if is_distributed:
-            download(data_server_url, model_file,model_file)
+            download(data_server_url, model_file, model_file)
         try:
             if os.path.exists(model_file):
                 checkpoint = torch.load(model_file)
@@ -245,8 +245,8 @@ class TrainPipeline():
             gpu_id = self.gpus[self.num_inst % len(self.gpus)]
             self.num_inst += 1
             proc = multiprocessing.Process(target=collect_selfplay_data,
-                                           args=(idx,gpu_id, self.data_queue, self.data_queue_lock,
-                                                 self.game,self.board_width, self.board_height, self.feature_planes,
+                                           args=(idx, gpu_id, self.data_queue, self.data_queue_lock,
+                                                 self.game, self.board_width, self.board_height, self.feature_planes,
                                                  self.c_puct, self.n_playout, self.temp,
                                                  self.model_file, 1,
                                                  is_distributed, data_server_url))
@@ -265,7 +265,11 @@ class TrainPipeline():
                         for sample in samples:
                             self.data_buffer.append(sample)
                             cnt = cnt + 1
-                        if cnt > self.batch_size and len(self.data_buffer) > self.batch_size:
+                        if len(samples) > 0:
+                            print(
+                                "batch i:{}, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(self.data_buffer),
+                                                                                          time.time() - t1))
+                        if len(samples) > 0 and cnt > self.batch_size and len(self.data_buffer) > self.batch_size:
                             break
                         time.sleep(2)
                 else:
@@ -278,7 +282,7 @@ class TrainPipeline():
                         if cnt > self.batch_size and len(self.data_buffer) > self.batch_size:
                             break
                 t2 = time.time()
-                print("batch i:{}, data_queue_size:{},time_used:{:.3f}".format(i + 1, self.data_queue.qsize(), t2 - t1))
+                print("batch i:{}, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(self.data_buffer), t2 - t1))
                 loss, entropy = self.policy_update()
                 state = {'state_dict': self.policy_value_net.policy_value_model.state_dict(),
                          'optim_dict': self.policy_value_net.optimizer.state_dict(),
