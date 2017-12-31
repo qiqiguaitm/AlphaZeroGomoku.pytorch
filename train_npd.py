@@ -58,6 +58,8 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
     time.sleep(int(pid) * 3)
     n_epoch = 0
     while True:
+        if is_distributed:
+            download(data_server_url, model_file, model_file)
         if os.path.exists(model_file):
             while True:
                 try:
@@ -258,10 +260,7 @@ class TrainPipeline():
             procs.append(proc)
             proc.start()
         self.collect_procs = procs
-        if is_distributed:
-            while True:
-                download(data_server_url, self.model_file, self.model_file)
-                time.sleep(random.randint(5,8))
+
 
     def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         try:
