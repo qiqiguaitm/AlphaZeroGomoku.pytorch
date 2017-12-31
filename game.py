@@ -161,7 +161,7 @@ class Game(object):
         print()
         for x in range(width):
             print("{0:4}".format(x), end='')
-        #print('\r\n')
+        print('\n')
         for i in range(height - 1, -1, -1):
             print("{0:2d}".format(i), end='')
             for j in range(width):
@@ -173,7 +173,7 @@ class Game(object):
                     print('O'.center(4), end='')
                 else:
                     print('_'.center(4), end='')
-            print('\r\n')
+            print('\n')
             
     def start_play(self, player1, player2, start_player=0, is_shown=1):
         """
