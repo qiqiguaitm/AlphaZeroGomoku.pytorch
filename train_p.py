@@ -42,15 +42,13 @@ def get_equi_data(play_data, board_height, board_width):
     return extend_data
 
 
-def collect_selfplay_data(gpu_id, gpu_lock, data_queue, data_queue_lock, game,
+def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
                           board_width, board_height,
                           c_puct, n_playout, temp,
                           model_file, n_games=1):
     """collect self-play data for training"""
-    #gpu_lock.acquire()
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     policy_value_net = PolicyValueNet(board_width, board_height)
-    #gpu_lock.release()
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
     while True:
@@ -68,16 +66,14 @@ def collect_selfplay_data(gpu_id, gpu_lock, data_queue, data_queue_lock, game,
             checkpoint = torch.load(model_file)
         else:
             checkpoint = None
-        #gpu_lock.acquire()
-        #os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         policy_value_net = PolicyValueNet(board_width, board_height, checkpoint)
-        #gpu_lock.release()
         mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                  n_playout=n_playout, is_selfplay=1)
 
 
-
-def policy_evaluate(gpu_id,gpu_lock, win_queue, job_queue, job_queue_lock, game, role,
+def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
                     board_width, board_height,
                     c_puct, n_playout, pure_mcts_playout_num,
                     model_file):
@@ -91,10 +87,8 @@ def policy_evaluate(gpu_id,gpu_lock, win_queue, job_queue, job_queue_lock, game,
             time.sleep(1)
         job_queue.get()
         checkpoint = torch.load(model_file)
-        #gpu_lock.acquire()
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         policy_value_net = PolicyValueNet(board_width, board_height, checkpoint)
-        #gpu_lock.release()
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
         pure_mcts_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
@@ -135,7 +129,6 @@ class TrainPipeline():
         self.model_file = 'checkpoint.pth.tar'
         self.best_model_name = 'checkpoint_best.pth.tar'
         self.manager = multiprocessing.Manager()
-        self.gpu_lock = self.manager.Lock()
         # start training from a given policy-value net
         #        policy_param = pickle.load(open('current_policy.model', 'rb'))
         #        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, net_params = policy_param)
@@ -144,10 +137,8 @@ class TrainPipeline():
     def init_model(self):
         gpu_id = self.gpus[self.num_inst % len(self.gpus)]
         self.num_inst += 1
-        #self.gpu_lock.acquire()
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         self.policy_value_net = PolicyValueNet(self.board_width, self.board_height)
-        #self.gpu_lock.release()
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                       n_playout=self.n_playout, is_selfplay=1)
 
@@ -195,9 +186,9 @@ class TrainPipeline():
         NUM_PROCESS = self.n_games_eval
         for idx in range(NUM_PROCESS):
             start_role = idx % 2
-            gpu_id = self.gpus[self.num_inst% len(self.gpus)]
-            self.num_inst +=1
-            args = (gpu_id, self.gpu_lock, self.win_queue, self.job_queue, self.job_queue_lock,
+            gpu_id = self.gpus[self.num_inst % len(self.gpus)]
+            self.num_inst += 1
+            args = (gpu_id, self.win_queue, self.job_queue, self.job_queue_lock,
                     self.game, start_role,
                     self.board_width, self.board_height,
                     self.c_puct, self.n_playout, self.pure_mcts_playout_num,
@@ -232,7 +223,7 @@ class TrainPipeline():
             gpu_id = self.gpus[self.num_inst % len(self.gpus)]
             self.num_inst += 1
             proc = multiprocessing.Process(target=collect_selfplay_data,
-                                           args=(gpu_id,self.gpu_lock, self.data_queue, self.data_queue_lock, self.game,
+                                           args=(gpu_id, self.data_queue, self.data_queue_lock, self.game,
                                                  self.board_width, self.board_height,
                                                  self.c_puct, self.n_playout, self.temp,
                                                  self.model_file, 1,))
