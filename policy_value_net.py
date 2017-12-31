@@ -105,10 +105,12 @@ class PolicyValueNet(object):
     def create_policy_value_net(self):
         self.policy_value_model = PolicyValueBackBoneNet(self.board_height * self.board_width,
                                                          self.feature_planes, self.checkpoint)
-        self.policy_value_model.cuda()
+
         if self.mode == 'train':
+            self.policy_value_model = torch.nn.DataParallel(self.policy_value_model).cuda()
             self.policy_value_model.train()
         else:
+            self.policy_value_model.cuda()
             self.policy_value_model.eval()
 
     def resume(self, checkpoint):
