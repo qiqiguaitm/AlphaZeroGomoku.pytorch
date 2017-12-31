@@ -53,7 +53,7 @@ class PolicyValueBackBoneNet(nn.Module):
 
         conv1 = BasicConv2d(self.feature_planes, 256, 3, 1, 1)
         residuals = [ResidualBlock(256) for i in range(20)]
-        self.seqs = nn.Sequential(tuple([conv1]+residuals))
+        self.seqs = nn.Sequential(*tuple([conv1]+residuals))
 
         '''
         conv1 = BasicConv2d(self.feature_planes, 32, 3, 1, 1)
