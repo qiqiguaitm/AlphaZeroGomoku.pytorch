@@ -24,7 +24,10 @@ def download(data_server_url, file_name, save_path):
         file_name = os.path.split(file_name)[-1]
     cmd_download = 'wget %s/%s -O %s --timeout=600 ' % (data_server_url, file_name, save_path + '.tmp')
     os.system(cmd_download)
-    size = os.path.getsize(save_path + '.tmp')
+    if os.path.exists(save_path + '.tmp'):
+        size = os.path.getsize(save_path + '.tmp')
+    else:
+        return False
     if size == 0:
         os.remove(save_path + '.tmp')
         return False
