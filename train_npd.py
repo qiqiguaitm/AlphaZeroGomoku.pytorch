@@ -177,9 +177,11 @@ class TrainPipeline():
         mcts_probs_batch_v = Variable(torch.Tensor(mcts_probs_batch.copy()).type(torch.FloatTensor).cuda())
         winner_batch_v = Variable(torch.Tensor(winner_batch.copy()).type(torch.FloatTensor).cuda())
         t12 = time.time()
+        t21 = time.time()
         old_probs, old_v, loss, entropy = self.policy_value_net.train_step(state_batch_v, mcts_probs_batch_v,
                                                                            winner_batch_v,
                                                                            self.learn_rate * self.lr_multiplier)
+        t22 = time.time()
         old_probs, old_v = old_probs.data.cpu().numpy(), old_v.data.cpu().numpy()
         for i in range(self.epochs - 1):
             new_probs, new_v, loss, entropy = self.policy_value_net.train_step(state_batch_v, mcts_probs_batch_v,
@@ -197,14 +199,14 @@ class TrainPipeline():
             self.lr_multiplier /= 1.5
         elif kl < self.kl_targ / 2 and self.lr_multiplier < 10:
             self.lr_multiplier *= 1.5
-
         explained_var_old = 1 - np.var(np.array(winner_batch) - old_v.flatten()) / np.var(np.array(winner_batch))
         explained_var_new = 1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch))
         t2 = time.time()
         print(
             "kl:{:.5f},lr_multiplier:{:.3f},loss:{},entropy:{},explained_var_old:{:.3f},explained_var_new:{:.3f},"
-            "time_used_for_data:{:.3f},time_used:{:.3f}".format(
-                kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new, t12 - t11, t2 - t1))
+            "time_used_for_data:{:.3f},time_used_for_trainstep:{:.3f},time_used:{:.3f}".format(
+                kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new, t12 - t11, t22 - t21,
+                                                                                             t2 - t1))
         return loss, entropy
 
     def policy_evaluate(self):
