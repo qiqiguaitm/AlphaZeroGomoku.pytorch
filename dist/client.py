@@ -3,7 +3,7 @@ import shutil
 import uuid
 import cPickle as pickle
 import time
-
+import subprocess
 TunnelPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/')
 if not os.path.exists(TunnelPath):
     os.mkdir(TunnelPath)
@@ -23,7 +23,9 @@ def download(data_server_url, file_name, save_path):
     if '/' in file_name:
         file_name = os.path.split(file_name)[-1]
     cmd_download = 'wget %s/%s -O %s --timeout=600 ' % (data_server_url, file_name, save_path + '.tmp')
-    os.system(cmd_download)
+    #os.system(cmd_download)
+    sub = subprocess.Popen(cmd_download, shell=True, stdout=subprocess.PIPE)
+    sub.wait()
     if os.path.exists(save_path + '.tmp'):
         size = os.path.getsize(save_path + '.tmp')
     else:
