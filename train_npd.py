@@ -267,7 +267,7 @@ class TrainPipeline():
                             cnt = cnt + 1
                         if len(samples) > 0:
                             print(
-                                "batch i:{}, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(self.data_buffer),
+                                "batch i:{}, collecting, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(self.data_buffer),
                                                                                           time.time() - t1))
                         if len(samples) > 0 and cnt > self.batch_size and len(self.data_buffer) > self.batch_size:
                             break
