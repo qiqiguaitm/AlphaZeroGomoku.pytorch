@@ -160,7 +160,7 @@ class Game(object):
         print("Player", player2, "with O".rjust(3))
         print()
         for x in range(width):
-            print("{0:8}".format(x), end='')
+            print("{0:4}".format(x), end='')
         print('\r\n')
         for i in range(height - 1, -1, -1):
             print("{0:2d}".format(i), end='')
@@ -173,7 +173,7 @@ class Game(object):
                     print('O'.center(4), end='')
                 else:
                     print('_'.center(4), end='')
-            print('\r\n\r\n')
+            print('\r\n')
             
     def start_play(self, player1, player2, start_player=0, is_shown=1):
         """
