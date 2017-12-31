@@ -78,8 +78,10 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                 time.sleep(1)
         for n_game in range(n_games):
             print('PID:%s,N_EPOCH:%s,N_GAME:%s start ...' % (pid, n_epoch, n_game))
+            t1 = time.time()
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
-            print('PID:%s,N_EPOCH:%s,N_GAME:%s end.' % (pid, n_epoch, n_game))
+            t2 = time.time()
+            print('PID:%s,N_EPOCH:%s,N_GAME:%s end, time_used:%s' % (pid, n_epoch, n_game,t2-t1))
             # augment the data
             play_data = get_equi_data(play_data, board_width, board_height)
             print('PID:%s,N_EPOCH:%s,N_GAME:%s send data ....' % (pid, n_epoch, n_game))
