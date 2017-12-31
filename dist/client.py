@@ -42,7 +42,8 @@ def download_samples():
             ss = pickle.load(os.path.join(TunnelPath,f))
             samples.extend(ss)
             os.remove(os.path.join(TunnelPath,f))
-        except:
+        except Exception,e:
+            print e
             continue
     return samples
 
