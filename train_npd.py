@@ -346,9 +346,11 @@ def main(args):
         training_pipeline.release()
     elif args.is_dist == '1':
         if args.role == 'master':
+            '''
             serv = threading.Thread(target=start_server, args=())
             serv.setDaemon(True)
             serv.start()
+            '''
             training_pipeline = TrainPipeline()
             print('start dist evaluating')
             training_pipeline.policy_evaluate()
