@@ -59,7 +59,7 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
     while True:
-        if is_distributed:
+        if not is_distributed:
             while data_queue.qsize() > 512 * 20:
                 time.sleep(1)
         for i in range(n_games):
