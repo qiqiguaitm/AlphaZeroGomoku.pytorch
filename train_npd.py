@@ -153,7 +153,7 @@ class TrainPipeline():
         self.gpus = ['0', '1', '2', '3']
         self.num_inst = 0
         self.model_file = 'checkpoint.pth.tar'
-        self.best_model_name = 'checkpoint_best.pth.tar'
+        self.best_model_file = 'checkpoint_best.pth.tar'
         if os.path.exists(self.model_file):
             os.remove(self.model_file)
         self.manager = multiprocessing.Manager()
@@ -263,6 +263,33 @@ class TrainPipeline():
             proc.start()
         self.collect_procs = procs
 
+    def eval(self,is_distributed=False, data_server_url=DIST_DATA_URL):
+        # check the performance of the current model，and save the model params
+        while True:
+            if os.path.exists(self.model_file):
+                while True:
+                    try:
+                        if is_distributed:
+                            download(data_server_url, self.model_file, self.model_file)
+                        checkpoint = torch.load(self.model_file)
+                        break
+                    except:
+                        continue
+            else:
+                checkpoint = None
+            t1 = time.time()
+            print("current self-play batch: {}, start to evaluate...".format(i + 1))
+            win_ratio = self.get_win_ratio()
+            if win_ratio > self.best_win_ratio:
+                print("New best policy!!!!!!!!")
+                self.best_win_ratio = win_ratio
+                if self.best_win_ratio == 1.0 and self.pure_mcts_playout_num < 5000:
+                    self.pure_mcts_playout_num += 1000
+                    self.best_win_ratio = 0.0
+                shutil.copy(self.model_file, self.best_model_file)
+            t2 = time.time()
+            print("current self-play batch: {}, end to evaluate...,time_used:{:.3f}".format(i + 1, t2 - t1))
+
     def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         try:
             for i in range(self.game_batch_num):
@@ -303,20 +330,6 @@ class TrainPipeline():
                 # upload(data_server_url, self.model_file)
                 torch.save(state, self.model_file + '.undone')
                 shutil.copy(self.model_file + '.undone', os.path.join(TunnelPath, os.path.split(self.model_file)[-1]))
-                # check the performance of the current model，and save the model params
-                if (i + 1) % self.check_freq == 0:
-                    t1 = time.time()
-                    print("current self-play batch: {}, start to evaluate...".format(i + 1))
-                    win_ratio = self.get_win_ratio()
-                    if win_ratio > self.best_win_ratio:
-                        print("New best policy!!!!!!!!")
-                        self.best_win_ratio = win_ratio
-                        if self.best_win_ratio == 1.0 and self.pure_mcts_playout_num < 5000:
-                            self.pure_mcts_playout_num += 1000
-                            self.best_win_ratio = 0.0
-                        torch.save(state, self.best_model_name)
-                    t2 = time.time()
-                    print("current self-play batch: {}, end to evaluate...,time_used:{:.3f}".format(i + 1, t2 - t1))
         except KeyboardInterrupt:
             print('\n\rquit')
 
@@ -336,7 +349,7 @@ def parse_arguments():
                         choices=['1', '0'],
                         help='run mode: dist or local')
     parser.add_argument('--role', metavar='ROLE', default='master',
-                        choices=['worker', 'master'],
+                        choices=['worker', 'master','evaluator'],
                         help='run role: worker or master')
     parser.add_argument('--data_server_url', metavar='URL', default=DIST_DATA_URL,
                         type=str,
@@ -364,8 +377,6 @@ def main(args):
             serv.start()
             '''
             training_pipeline = TrainPipeline()
-            print('start dist evaluating')
-            training_pipeline.policy_evaluate()
             training_pipeline.init_model()
             print('start dist training')
             training_pipeline.train(is_distributed=True, data_server_url=args.data_server_url)
@@ -373,7 +384,10 @@ def main(args):
             training_pipeline = TrainPipeline()
             print('start dist collecting')
             training_pipeline.collect_selfplay_data(is_distributed=True, data_server_url=args.data_server_url)
-
+        elif args.role == 'evaluator':
+            training_pipeline = TrainPipeline()
+            print('start dist evaluating')
+            training_pipeline.policy_evaluate()
 
 if __name__ == '__main__':
     main(parse_arguments())
