@@ -55,12 +55,22 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                           is_distributed=False, data_server_url=DIST_DATA_URL):
     """collect self-play data for training"""
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-    policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval')
-    mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
-                             n_playout=n_playout, is_selfplay=1)
     time.sleep(int(pid) * 3)
     n_epoch = 0
     while True:
+        if os.path.exists(model_file):
+            while True:
+                try:
+                    checkpoint = torch.load(model_file)
+                    break
+                except:
+                    continue
+        else:
+            checkpoint = None
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+        policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval', checkpoint=checkpoint)
+        mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
+                                 n_playout=n_playout, is_selfplay=1)
         if not is_distributed:
             while data_queue.qsize() > 512 * 20:
                 time.sleep(1)
@@ -79,21 +89,6 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                     data_queue.put(data)
                 data_queue_lock.release()
             print('PID:%s,N_EPOCH:%s,N_GAME:%s send data end.' % (pid, n_epoch, n_game))
-
-        if os.path.exists(model_file):
-            while True:
-                try:
-                    checkpoint = torch.load(model_file)
-                    break
-                except:
-                    continue
-        else:
-            checkpoint = None
-
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-        policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval', checkpoint=checkpoint)
-        mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
-                                 n_playout=n_playout, is_selfplay=1)
         n_epoch += 1
 
 
@@ -107,7 +102,6 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
     """
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     while True:
-
         while job_queue.empty():
             time.sleep(1)
         job_queue.get()
