@@ -47,10 +47,10 @@ def collect_selfplay_data(gpu_id, gpu_lock, data_queue, data_queue_lock, game,
                           c_puct, n_playout, temp,
                           model_file, n_games=1):
     """collect self-play data for training"""
-    gpu_lock.acquire()
+    #gpu_lock.acquire()
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     policy_value_net = PolicyValueNet(board_width, board_height)
-    gpu_lock.release()
+    #gpu_lock.release()
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
     while True:
@@ -68,10 +68,10 @@ def collect_selfplay_data(gpu_id, gpu_lock, data_queue, data_queue_lock, game,
             checkpoint = torch.load(model_file)
         else:
             checkpoint = None
-        gpu_lock.acquire()
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+        #gpu_lock.acquire()
+        #os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         policy_value_net = PolicyValueNet(board_width, board_height, checkpoint)
-        gpu_lock.release()
+        #gpu_lock.release()
         mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                  n_playout=n_playout, is_selfplay=1)
 
@@ -91,10 +91,10 @@ def policy_evaluate(gpu_id,gpu_lock, win_queue, job_queue, job_queue_lock, game,
             time.sleep(1)
         job_queue.get()
         checkpoint = torch.load(model_file)
-        gpu_lock.acquire()
+        #gpu_lock.acquire()
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         policy_value_net = PolicyValueNet(board_width, board_height, checkpoint)
-        gpu_lock.release()
+        #gpu_lock.release()
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
         pure_mcts_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
@@ -144,10 +144,10 @@ class TrainPipeline():
     def init_model(self):
         gpu_id = self.gpus[self.num_inst % len(self.gpus)]
         self.num_inst += 1
-        self.gpu_lock.acquire()
+        #self.gpu_lock.acquire()
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         self.policy_value_net = PolicyValueNet(self.board_width, self.board_height)
-        self.gpu_lock.release()
+        #self.gpu_lock.release()
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                       n_playout=self.n_playout, is_selfplay=1)
 
