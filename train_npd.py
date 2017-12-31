@@ -339,14 +339,14 @@ def main(args):
             serv.setDaemon(True)
             serv.start()
             training_pipeline = TrainPipeline()
-            print('start evaluating')
+            print('start dist evaluating')
             training_pipeline.policy_evaluate()
             training_pipeline.init_model()
-            print('start training')
+            print('start dist training')
             training_pipeline.train(is_distributed=True, data_server_url=args.data_server_url)
         elif args.role == 'worker':
             training_pipeline = TrainPipeline()
-            print('start collecting')
+            print('start dist collecting')
             training_pipeline.collect_selfplay_data(is_distributed=True, data_server_url=args.data_server_url)
 
 
