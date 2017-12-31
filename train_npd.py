@@ -177,12 +177,14 @@ class TrainPipeline():
         mcts_probs_batch_v = Variable(torch.Tensor(mcts_probs_batch.copy()).type(torch.FloatTensor).cuda())
         winner_batch_v = Variable(torch.Tensor(winner_batch.copy()).type(torch.FloatTensor).cuda())
         t12 = time.time()
-        old_probs, old_v = self.policy_value_net.policy_value_model(state_batch_v)
+        old_probs, old_v, loss, entropy = self.policy_value_net.train_step(state_batch_v, mcts_probs_batch_v,
+                                                                           winner_batch_v,
+                                                                           self.learn_rate * self.lr_multiplier)
         old_probs, old_v = old_probs.data.cpu().numpy(), old_v.data.cpu().numpy()
-        for i in range(self.epochs):
-            loss, entropy = self.policy_value_net.train_step(state_batch_v, mcts_probs_batch_v, winner_batch_v,
-                                                             self.learn_rate * self.lr_multiplier)
-            new_probs, new_v = self.policy_value_net.policy_value_model(state_batch_v)
+        for i in range(self.epochs - 1):
+            new_probs, new_v, loss, entropy = self.policy_value_net.train_step(state_batch_v, mcts_probs_batch_v,
+                                                                               winner_batch_v,
+                                                                               self.learn_rate * self.lr_multiplier)
             new_probs, new_v = new_probs.data.cpu().numpy(), new_v.data.cpu().numpy()
             kl = np.mean(np.sum(old_probs * (np.log(old_probs + 1e-10) - np.log(new_probs + 1e-10)), axis=1))
             if kl > self.kl_targ * 4:  # early stopping if D_KL diverges badly

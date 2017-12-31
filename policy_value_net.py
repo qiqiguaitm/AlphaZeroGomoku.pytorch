@@ -24,7 +24,6 @@ class BasicConv2d(nn.Module):
             self.bn = nn.BatchNorm2d(out_planes)
         self.act = nn.PReLU(out_planes)
 
-
     def forward(self, x):
         x = self.conv(x)
         if self.use_batchnorm:
@@ -43,6 +42,7 @@ class ResidualBlock(nn.Module):
         x = self.conv1_2(self.conv1_1(x)) + x
         return x
 
+
 class PolicyValueBackBoneNet(nn.Module):
     def __init__(self, num_actions, feature_planes=4, checkpoint=None):
         super(PolicyValueBackBoneNet, self).__init__()
@@ -51,7 +51,7 @@ class PolicyValueBackBoneNet(nn.Module):
 
         conv1 = BasicConv2d(self.feature_planes, 256, 3, 1, 1)
         residuals = [ResidualBlock(256) for i in range(10)]
-        self.seqs = nn.Sequential(*tuple([conv1]+residuals))
+        self.seqs = nn.Sequential(*tuple([conv1] + residuals))
 
         '''
         conv1 = BasicConv2d(self.feature_planes, 32, 3, 1, 1)
@@ -92,7 +92,7 @@ class PolicyValueBackBoneNet(nn.Module):
 class PolicyValueNet(object):
     """policy-value network """
 
-    def __init__(self, board_width, board_height, feature_planes=4, mode='train',checkpoint=None):
+    def __init__(self, board_width, board_height, feature_planes=4, mode='train', checkpoint=None):
         self.board_width = board_width
         self.board_height = board_height
         self.feature_planes = feature_planes
@@ -149,7 +149,7 @@ class PolicyValueNet(object):
         self.optimizer.step()
         entropy = (-act_probs.log() * act_probs).sum(dim=-1)
         entropy = entropy.mean()
-        return loss.data[0], entropy.data[0]
+        return act_probs, value, loss.data[0], entropy.data[0]
 
 
 if __name__ == '__main__':
