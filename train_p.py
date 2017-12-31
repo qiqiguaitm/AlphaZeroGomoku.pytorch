@@ -142,7 +142,7 @@ class TrainPipeline():
         # start training from a new policy-value net
 
     def init_model(self):
-        gpu_id = self.gpus[(self.num_inst + 1) % len(self.gpus)]
+        gpu_id = self.gpus[self.num_inst % len(self.gpus)]
         self.num_inst += 1
         self.gpu_lock.acquire()
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
@@ -195,8 +195,8 @@ class TrainPipeline():
         NUM_PROCESS = self.n_games_eval
         for idx in range(NUM_PROCESS):
             start_role = idx % 2
-            gpu_id = self.gpus[(idx + self.num_inst) % len(self.gpus)]
-            self.num_inst += 1
+            gpu_id = self.gpus[self.num_inst% len(self.gpus)]
+            self.num_inst +=1
             args = (gpu_id, self.gpu_lock, self.win_queue, self.job_queue, self.job_queue_lock,
                     self.game, start_role,
                     self.board_width, self.board_height,
@@ -229,7 +229,7 @@ class TrainPipeline():
         NUM_PROCESS = 24
         procs = []
         for idx in range(NUM_PROCESS):
-            gpu_id = self.gpus[(idx + self.num_inst) % len(self.gpus)]
+            gpu_id = self.gpus[self.num_inst % len(self.gpus)]
             self.num_inst += 1
             proc = multiprocessing.Process(target=collect_selfplay_data,
                                            args=(gpu_id,self.gpu_lock, self.data_queue, self.data_queue_lock, self.game,
