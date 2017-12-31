@@ -266,6 +266,7 @@ class TrainPipeline():
 
     def eval(self,is_distributed=False, data_server_url=DIST_DATA_URL):
         # check the performance of the current model，and save the model params
+        idx = 0
         while True:
             if os.path.exists(self.model_file):
                 while True:
@@ -279,7 +280,8 @@ class TrainPipeline():
             else:
                 checkpoint = None
             t1 = time.time()
-            print("current self-play batch: {}, start to evaluate...".format(i + 1))
+            print("current self-play batch: {}, start to evaluate...".format(idx + 1))
+            idx = idx + 1
             win_ratio = self.get_win_ratio()
             if win_ratio > self.best_win_ratio:
                 print("New best policy!!!!!!!!")
