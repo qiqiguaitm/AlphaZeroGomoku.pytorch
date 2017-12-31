@@ -58,7 +58,7 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
     policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval')
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
-    time.sleep(random.randint(0,24*10))
+    time.sleep(random.randint(0,24*5))
     n_epoch = 0
     while True:
         if not is_distributed:
