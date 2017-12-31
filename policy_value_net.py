@@ -76,11 +76,12 @@ class PolicyValueBackBoneNet(nn.Module):
 class PolicyValueNet(object):
     """policy-value network """
 
-    def __init__(self, board_width, board_height, feature_planes=4, checkpoint=None):
+    def __init__(self, board_width, board_height, feature_planes=4, mode='train',checkpoint=None):
         self.board_width = board_width
         self.board_height = board_height
         self.feature_planes = feature_planes
         self.checkpoint = checkpoint
+        self.mode = mode
         self.l2_const = 1e-4  # coef of l2 penalty
         self.create_policy_value_net()
         self.optimizer = optim.Adam(self.policy_value_model.parameters(), lr=3e-2)
@@ -89,6 +90,10 @@ class PolicyValueNet(object):
         self.policy_value_model = PolicyValueBackBoneNet(self.board_height * self.board_width,
                                                          self.feature_planes, self.checkpoint)
         self.policy_value_model.cuda()
+        if self.mode == 'train':
+            self.policy_value_model.train()
+        else:
+            self.policy_value_model.eval()
 
     def resume(self, checkpoint):
         self.policy_value_model.resume(checkpoint)
@@ -100,7 +105,6 @@ class PolicyValueNet(object):
         """
         legal_positions = board.availables
         current_state = board.current_state()
-        self.policy_value_model.eval()
         current_state = current_state.reshape(-1, self.feature_planes, self.board_width, self.board_height)
         current_state = Variable(torch.Tensor(current_state.copy()).type(torch.FloatTensor).cuda())
         act_probs, value = self.policy_value_model(current_state)
@@ -113,7 +117,6 @@ class PolicyValueNet(object):
         Three loss terms：
         loss = (z - v)^2 + pi^T * log(p) + c||theta||^2
         """
-        self.policy_value_model.train()
         for idx, group in enumerate(self.optimizer.param_groups):
             if 'step' not in group:
                 group['step'] = 0

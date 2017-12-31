@@ -48,7 +48,7 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
                           model_file, n_games=1):
     """collect self-play data for training"""
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-    policy_value_net = PolicyValueNet(board_width, board_height, feature_planes)
+    policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval')
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
     while True:
@@ -68,7 +68,7 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
             checkpoint = None
 
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-        policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, checkpoint)
+        policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval', checkpoint=checkpoint)
         mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                  n_playout=n_playout, is_selfplay=1)
 
@@ -133,10 +133,6 @@ class TrainPipeline():
         if os.path.exists(self.model_file):
             os.remove(self.model_file)
         self.manager = multiprocessing.Manager()
-        # start training from a given policy-value net
-        #        policy_param = pickle.load(open('current_policy.model', 'rb'))
-        #        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, net_params = policy_param)
-        # start training from a new policy-value net
 
     def init_model(self):
         gpu_id = self.gpus[self.num_inst % len(self.gpus)]

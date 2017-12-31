@@ -14,6 +14,7 @@ from mcts_pure import MCTSPlayer as MCTS_Pure
 from mcts_alphazero import MCTSPlayer
 from negamax import NegamaxPlayer
 
+
 class Human(object):
     """
     human player
@@ -52,12 +53,12 @@ def run():
         game = Game(board)
 
         checkpoint = torch.load(model_file)
-        #best_policy_model = PolicyValueNet(width, height, feature_planes, checkpoint)
-        #ai_player = MCTSPlayer(best_policy_model.policy_value_fn, c_puct=5,
+        # best_policy_model = PolicyValueNet(width, height, feature_planes, mode='eval', checkpoint=checkpoint)
+        # ai_player = MCTSPlayer(best_policy_model.policy_value_fn, c_puct=5,
         #                         n_playout=400)  # set larger n_playout for better performance
 
         # uncomment the following line to play with pure MCTS (its much weaker even with a larger n_playout)
-        #ai_player = MCTS_Pure(c_puct=5, n_playout=1000)
+        # ai_player = MCTS_Pure(c_puct=5, n_playout=1000)
         ai_player = NegamaxPlayer(cmd_path='negamax/build/renju')
         # human player, input your move in the format: 2,3
         human = Human()
