@@ -161,7 +161,7 @@ class Game(object):
         print()
         for x in range(width):
             print("{0:4}".format(x), end='')
-        print('\r\n')
+        #print('\r\n')
         for i in range(height - 1, -1, -1):
             print("{0:2d}".format(i), end='')
             for j in range(width):
