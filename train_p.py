@@ -129,7 +129,7 @@ class TrainPipeline():
         self.model_file = 'checkpoint.pth.tar'
         self.best_model_name = 'checkpoint_best.pth.tar'
         if os.path.exists(self.model_file):
-            shutil.rmtree(self.model_file)
+            os.remove(self.model_file)
         self.manager = multiprocessing.Manager()
         # start training from a given policy-value net
         #        policy_param = pickle.load(open('current_policy.model', 'rb'))
