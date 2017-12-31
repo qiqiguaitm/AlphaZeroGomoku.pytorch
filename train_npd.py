@@ -58,7 +58,7 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
     policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval')
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
-    time.sleep(int(pid)*3)
+    time.sleep(int(pid) * 3)
     n_epoch = 0
     while True:
         if not is_distributed:
@@ -168,14 +168,15 @@ class TrainPipeline():
     def policy_update(self):
         """update the policy-value net"""
         t1 = time.time()
+        t11 = time.time()
         mini_batch = random.sample(self.data_buffer, self.batch_size)
         state_batch = np.array([data[0] for data in mini_batch])
         mcts_probs_batch = np.array([data[1] for data in mini_batch])
         winner_batch = np.array([data[2] for data in mini_batch])
-
         state_batch_v = Variable(torch.Tensor(state_batch.copy()).type(torch.FloatTensor).cuda())
         mcts_probs_batch_v = Variable(torch.Tensor(mcts_probs_batch.copy()).type(torch.FloatTensor).cuda())
         winner_batch_v = Variable(torch.Tensor(winner_batch.copy()).type(torch.FloatTensor).cuda())
+        t12 = time.time()
         old_probs, old_v = self.policy_value_net.policy_value_model(state_batch_v)
         old_probs, old_v = old_probs.data.cpu().numpy(), old_v.data.cpu().numpy()
         for i in range(self.epochs):
@@ -196,8 +197,9 @@ class TrainPipeline():
         explained_var_new = 1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch))
         t2 = time.time()
         print(
-            "kl:{:.5f},lr_multiplier:{:.3f},loss:{},entropy:{},explained_var_old:{:.3f},explained_var_new:{:.3f},time_used:{:.3f}".format(
-                kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new, t2 - t1))
+            "kl:{:.5f},lr_multiplier:{:.3f},loss:{},entropy:{},explained_var_old:{:.3f},explained_var_new:{:.3f},"
+            "time_used_for_data:{:.3f},time_used:{:.3f}".format(
+                kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new, t12 - t11, t2 - t1))
         return loss, entropy
 
     def policy_evaluate(self):
@@ -268,8 +270,9 @@ class TrainPipeline():
                             cnt = cnt + 1
                         if len(samples) > 0:
                             print(
-                                "batch i:{}, collecting, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(self.data_buffer),
-                                                                                          time.time() - t1))
+                                "batch i:{}, collecting, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(
+                                    self.data_buffer),
+                                                                                                      time.time() - t1))
                         if len(self.data_buffer) > self.batch_size:
                             break
                         time.sleep(2)
