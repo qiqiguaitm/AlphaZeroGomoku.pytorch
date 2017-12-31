@@ -40,7 +40,7 @@ def upload_samples(data_server_url, samples):
     tmp_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'temp/')
     if not os.path.exists(tmp_dir):
         os.mkdir(tmp_dir)
-    samples_path = os.path.join(tmp_dir, 'samples.' + str(uuid.uuid4()) + '.pkl')
+    samples_path = os.path.join(tmp_dir, 'samples.' + str(int(time.time())) + '_' + str(uuid.uuid4()) + '.pkl')
     with open(samples_path, 'wb') as pickle_file:
         pickle.dump(samples, pickle_file, 2)
     upload(data_server_url, samples_path)
@@ -63,7 +63,6 @@ def download_samples():
             print e
             continue
     return samples
-
 
 
 if __name__ == '__main__':
