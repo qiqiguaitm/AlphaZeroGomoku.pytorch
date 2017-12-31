@@ -261,7 +261,7 @@ class TrainPipeline():
         if is_distributed:
             while True:
                 download(data_server_url, self.model_file, self.model_file)
-                time.sleep(6)
+                time.sleep(random.randint(5,8))
 
     def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         try:
