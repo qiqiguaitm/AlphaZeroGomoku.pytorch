@@ -244,7 +244,7 @@ class TrainPipeline():
                     item = self.data_queue.get()
                     self.data_buffer.append(item)
                     cnt = cnt + 1
-                    if cnt > 128:
+                    if cnt > 128 and len(self.data_buffer) > self.batch_size:
                         break
                 t2 = time.time()
                 print("batch i:{}, data_queue_size:{},time_used:{:.3f}".format(i + 1, self.data_queue.qsize(), t2 - t1))

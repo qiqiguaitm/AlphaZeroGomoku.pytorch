@@ -16,6 +16,7 @@ class Board(object):
         self.height = int(kwargs.get('height', 8))
         self.states = {} # board states, key:move as location on the board, value:player as pieces type
         self.n_in_row = int(kwargs.get('n_in_row', 5)) # need how many pieces in a row to win
+        self.feature_planes = int(kwargs.get('feature_planes', 8))
         self.players = [1, 2] # player1 and player2
         
     def init_board(self, start_player=0):
