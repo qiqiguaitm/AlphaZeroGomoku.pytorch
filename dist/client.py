@@ -39,8 +39,9 @@ def download_samples():
         if not f.startswith('samples.'):
             continue
         try:
-            ss = pickle.load(os.path.join(TunnelPath,f))
-            samples.extend(ss)
+            with open(os.path.join(TunnelPath,f),'r') as pickle_file:
+                ss = pickle.load(pickle_file)
+                samples.extend(ss)
             os.remove(os.path.join(TunnelPath,f))
         except Exception,e:
             print e
