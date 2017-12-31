@@ -21,16 +21,13 @@ class NegamaxPlayer(object):
             return 180
         elif len(sensible_moves) > 0:
             state_line = board.state_line()
-            print(state_line)
             cmd = self.cmd_path + ' -s ' + state_line + ' -p ' + str(self.player)
-            print cmd
             sub = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             sub.wait()
             ret = json.loads(sub.stdout.read())
             move_c = ret['result']['move_c']
             move_r = ret['result']['move_r']
             move = int(move_r) * board.width + int(move_c)
-            print move_c,move_r,move
             return move
         else:
             print("WARNING: the board is full")
