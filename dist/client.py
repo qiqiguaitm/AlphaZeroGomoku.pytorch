@@ -15,7 +15,7 @@ def touch(fname):
 
 
 def upload(data_server_url, file_path):
-    cmd_upload = 'curl -F "file=@%s" %s' % (file_path, data_server_url)
+    cmd_upload = 'curl --referer "www.google.com" -F "file=@%s" %s' % (file_path, data_server_url)
     os.system(cmd_upload)
 
 
