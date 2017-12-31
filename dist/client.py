@@ -37,7 +37,7 @@ def download(data_server_url, file_name, save_path):
     cmd_download = 'wget %s/%s -O %s --timeout=600 ' % (data_server_url, file_name, save_path + '.tmp')
     #os.system(cmd_download)
     t1 = time.time()
-    sub = Popen(cmd_download, shell=True,  stdin=PIPE, stdout=DEVNULL, stderr=STDOUT)
+    sub = Popen(cmd_download, shell=True, stdout=DEVNULL, stderr=STDOUT)
     sub.wait()
     t2 = time.time()
     print('CMD SUCCESS:time_used:%s,%s' % (t2 - t1, cmd_download))
