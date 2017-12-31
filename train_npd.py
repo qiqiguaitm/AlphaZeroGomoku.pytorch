@@ -48,7 +48,7 @@ def get_equi_data(play_data, board_height, board_width):
     return extend_data
 
 
-def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
+def collect_selfplay_data(pid,gpu_id, data_queue, data_queue_lock, game,
                           board_width, board_height, feature_planes,
                           c_puct, n_playout, temp,
                           model_file, n_games=1,
@@ -58,14 +58,18 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
     policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval')
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
+    n_epoch = 0
     while True:
         if not is_distributed:
             while data_queue.qsize() > 512 * 20:
                 time.sleep(1)
-        for i in range(n_games):
+        for n_game in range(n_games):
+            print('PID:%s,N_EPOCH:%s,N_GAME:%s start ...'%(pid,n_epoch,n_game))
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
+            print('PID:%s,N_EPOCH:%s,N_GAME:%s end.' % (pid, n_epoch, n_game))
             # augment the data
             play_data = get_equi_data(play_data, board_width, board_height)
+            print('PID:%s,N_EPOCH:%s,N_GAME:%s send data ....' % (pid, n_epoch, n_game))
             if is_distributed:
                 upload_samples(data_server_url, play_data)
             else:
@@ -73,6 +77,7 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
                 for data in play_data:
                     data_queue.put(data)
                 data_queue_lock.release()
+            print('PID:%s,N_EPOCH:%s,N_GAME:%s send data end.' % (pid, n_epoch, n_game))
         if is_distributed:
             download(data_server_url, model_file)
         try:
@@ -87,6 +92,7 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
         policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval', checkpoint=checkpoint)
         mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                  n_playout=n_playout, is_selfplay=1)
+        n_epoch += 1
 
 
 def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
@@ -239,7 +245,7 @@ class TrainPipeline():
             gpu_id = self.gpus[self.num_inst % len(self.gpus)]
             self.num_inst += 1
             proc = multiprocessing.Process(target=collect_selfplay_data,
-                                           args=(gpu_id, self.data_queue, self.data_queue_lock,
+                                           args=(idx,gpu_id, self.data_queue, self.data_queue_lock,
                                                  self.game,self.board_width, self.board_height, self.feature_planes,
                                                  self.c_puct, self.n_playout, self.temp,
                                                  self.model_file, 1,
