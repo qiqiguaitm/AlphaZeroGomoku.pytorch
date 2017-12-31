@@ -309,13 +309,13 @@ class TrainPipeline():
 # Training settings
 def parse_arguments():
     parser = argparse.ArgumentParser(description='AlphaZeroGomoku')
-    parser.add_argument('--is_dist', '-', metavar='DIST', default='1',
+    parser.add_argument('--is_dist', metavar='DIST', default='1',
                         choices=['1', '0'],
                         help='run mode: dist or local')
-    parser.add_argument('--role', '-', metavar='ROLE', default='worker',
+    parser.add_argument('--role', metavar='ROLE', default='worker',
                         choices=['worker', 'master'],
                         help='run role: worker or master')
-    parser.add_argument('--data_server_url', '-', metavar='URL', default=DIST_DATA_URL,
+    parser.add_argument('--data_server_url', metavar='URL', default=DIST_DATA_URL,
                         type=str,
                         help='data_server_url')
     args = parser.parse_args()
