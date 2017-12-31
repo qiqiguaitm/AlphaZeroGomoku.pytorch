@@ -58,10 +58,11 @@ def download_samples():
                 ss = pickle.load(pickle_file)
                 samples.extend(ss)
             os.remove(os.path.join(TunnelPath, f))
+            return samples
         except Exception, e:
             print e
             continue
-    return samples
+
 
 
 if __name__ == '__main__':
