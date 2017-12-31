@@ -14,7 +14,6 @@ from mcts_pure import MCTSPlayer as MCTS_Pure
 from mcts_alphazero import MCTSPlayer
 
 
-
 class Human(object):
     """
     human player
@@ -46,6 +45,7 @@ class Human(object):
 def run():
     n = 5
     width, height = 8, 8
+    feature_planes = 8
     model_file = 'checkpoint_best.pth.tar'
     try:
         board = Board(width=width, height=height, n_in_row=n)
@@ -53,7 +53,7 @@ def run():
 
         checkpoint = torch.load(model_file)
 
-        best_policy_model = PolicyValueNet(width, height, checkpoint)
+        best_policy_model = PolicyValueNet(width, height, feature_planes, checkpoint)
         mcts_player = MCTSPlayer(best_policy_model.policy_value_fn, c_puct=5,
                                  n_playout=400)  # set larger n_playout for better performance
 

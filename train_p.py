@@ -103,7 +103,7 @@ class TrainPipeline():
         # params of the board and the game
         self.board_width = 15
         self.board_height = 15
-        self.feature_planes = 4
+        self.feature_planes = 8
         self.n_in_row = 5
         self.board = Board(width=self.board_width, height=self.board_height,
                            feature_planes=self.feature_planes, n_in_row=self.n_in_row)
