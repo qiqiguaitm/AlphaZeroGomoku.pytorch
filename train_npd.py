@@ -79,8 +79,6 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                     data_queue.put(data)
                 data_queue_lock.release()
             print('PID:%s,N_EPOCH:%s,N_GAME:%s send data end.' % (pid, n_epoch, n_game))
-        if is_distributed:
-            download(data_server_url, model_file, model_file)
         try:
             if os.path.exists(model_file):
                 checkpoint = torch.load(model_file)
@@ -263,6 +261,10 @@ class TrainPipeline():
             procs.append(proc)
             proc.start()
         self.collect_procs = procs
+        if is_distributed:
+            while True:
+                download(data_server_url, self.model_file, self.model_file)
+                time.sleep(2)
 
     def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         try:
