@@ -79,12 +79,15 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                     data_queue.put(data)
                 data_queue_lock.release()
             print('PID:%s,N_EPOCH:%s,N_GAME:%s send data end.' % (pid, n_epoch, n_game))
-        try:
-            if os.path.exists(model_file):
-                checkpoint = torch.load(model_file)
-            else:
-                checkpoint = None
-        except:
+
+        if os.path.exists(model_file):
+            while True:
+                try:
+                    checkpoint = torch.load(model_file)
+                    break
+                except:
+                    continue
+        else:
             checkpoint = None
 
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
