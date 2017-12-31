@@ -101,7 +101,7 @@ class PolicyValueNet(object):
         legal_positions = board.availables
         current_state = board.current_state()
         self.policy_value_model.eval()
-        current_state = current_state.reshape(-1, 4, self.board_width, self.board_height)
+        current_state = current_state.reshape(-1, self.feature_planes, self.board_width, self.board_height)
         current_state = Variable(torch.Tensor(current_state.copy()).type(torch.FloatTensor).cuda())
         act_probs, value = self.policy_value_model(current_state)
         act_probs, value = act_probs.data.cpu().numpy(), value.data.cpu().numpy()
@@ -132,8 +132,8 @@ class PolicyValueNet(object):
 
 
 if __name__ == '__main__':
-    pvnet = PolicyValueNet(8, 8)
-    b1 = Board(height=8, width=8, n_in_row=5)
+    pvnet = PolicyValueNet(8, 8, 4)
+    b1 = Board(height=8, width=8, feature_planes=4, n_in_row=5)
     b1.init_board()
     print pvnet.policy_value_fn(b1)
 
