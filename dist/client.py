@@ -50,6 +50,7 @@ def upload_samples(data_server_url, samples):
 def download_samples():
     samples = []
     fs = os.listdir(TunnelPath)
+    fs.sort()
     for f in fs:
         if not f.startswith('samples.'):
             continue
@@ -58,7 +59,6 @@ def download_samples():
                 ss = pickle.load(pickle_file)
                 samples.extend(ss)
             os.remove(os.path.join(TunnelPath, f))
-            return samples
         except Exception, e:
             print e
             continue
