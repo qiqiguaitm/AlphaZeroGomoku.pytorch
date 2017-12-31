@@ -28,7 +28,7 @@ from dist.client import *
 from dist.data_server import *
 
 DIST_DATA_URL = 'http://10.83.150.55:8000/'
-
+DIST_DATA_URL = 'http://10.93.189.54:8000/'
 
 def get_equi_data(play_data, board_height, board_width):
     """
