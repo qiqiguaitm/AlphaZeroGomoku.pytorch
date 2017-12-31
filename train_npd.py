@@ -79,7 +79,7 @@ def collect_selfplay_data(pid,gpu_id, data_queue, data_queue_lock, game,
                 data_queue_lock.release()
             print('PID:%s,N_EPOCH:%s,N_GAME:%s send data end.' % (pid, n_epoch, n_game))
         if is_distributed:
-            download(data_server_url, model_file)
+            download(data_server_url, model_file,model_file)
         try:
             if os.path.exists(model_file):
                 checkpoint = torch.load(model_file)
