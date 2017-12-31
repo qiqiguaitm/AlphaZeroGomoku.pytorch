@@ -12,7 +12,7 @@ from game import Board, Game
 from policy_value_net import PolicyValueNet
 from mcts_pure import MCTSPlayer as MCTS_Pure
 from mcts_alphazero import MCTSPlayer
-
+from negamax import NegamaxPlayer
 
 class Human(object):
     """
@@ -44,7 +44,7 @@ class Human(object):
 
 def run():
     n = 5
-    width, height = 11, 11
+    width, height = 19, 19
     feature_planes = 8
     model_file = 'checkpoint_best.pth.tar'
     try:
@@ -53,17 +53,17 @@ def run():
 
         checkpoint = torch.load(model_file)
         #best_policy_model = PolicyValueNet(width, height, feature_planes, checkpoint)
-        #mcts_player = MCTSPlayer(best_policy_model.policy_value_fn, c_puct=5,
+        #ai_player = MCTSPlayer(best_policy_model.policy_value_fn, c_puct=5,
         #                         n_playout=400)  # set larger n_playout for better performance
 
         # uncomment the following line to play with pure MCTS (its much weaker even with a larger n_playout)
-        mcts_player = MCTS_Pure(c_puct=5, n_playout=1000)
-
+        #ai_player = MCTS_Pure(c_puct=5, n_playout=1000)
+        ai_player = NegamaxPlayer(cmd_path='negamax/build/renju')
         # human player, input your move in the format: 2,3
         human = Human()
 
         # set start_player=0 for human first
-        game.start_play(human, mcts_player, start_player=1, is_shown=1)
+        game.start_play(human, ai_player, start_player=0, is_shown=1)
     except KeyboardInterrupt:
         print('\n\rquit')
 

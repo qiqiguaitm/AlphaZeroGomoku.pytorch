@@ -22,7 +22,7 @@ import multiprocessing
 import threading
 import os
 from multiprocessing import Pool
-
+from negamax import NegamaxPlayer
 
 def get_equi_data(play_data, board_height, board_width):
     """
@@ -91,8 +91,9 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
         policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, checkpoint)
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
-        pure_mcts_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
-        winner = game.start_play(current_mcts_player, pure_mcts_player, start_player=role, is_shown=0)
+        #refer_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
+        refer_player = NegamaxPlayer(cmd_path='negamax/build/renju')
+        winner = game.start_play(current_mcts_player, refer_player, start_player=role, is_shown=0)
         job_queue_lock.acquire()
         win_queue.put(winner)
         job_queue_lock.release()

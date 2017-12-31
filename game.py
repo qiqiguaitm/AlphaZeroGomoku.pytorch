@@ -49,6 +49,15 @@ class Board(object):
             return -1
         return move
 
+    def state_line(self):
+        line = ''
+        for i in range(self.height):
+            for j in range(self.width):
+                loc = i * self.width + j
+                p = self.states.get(loc, 0)
+                line = line + str(p)
+        return line
+
     def current_state(self): 
         """return the board state from the perspective of the current player
         shape: 4*width*height"""
@@ -159,9 +168,10 @@ class Game(object):
         print("Player", player1, "with X".rjust(3))
         print("Player", player2, "with O".rjust(3))
         print()
+        print(" ",end="")
         for x in range(width):
             print("{0:4}".format(x), end='')
-        print('\n')
+        print()
         for i in range(height - 1, -1, -1):
             print("{0:2d}".format(i), end='')
             for j in range(width):
@@ -173,7 +183,8 @@ class Game(object):
                     print('O'.center(4), end='')
                 else:
                     print('_'.center(4), end='')
-            print('\n')
+            print()
+
             
     def start_play(self, player1, player2, start_player=0, is_shown=1):
         """
