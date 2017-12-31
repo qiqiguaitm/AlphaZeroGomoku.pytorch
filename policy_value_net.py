@@ -36,10 +36,11 @@ class BasicConv2d(nn.Module):
 
 
 class PolicyValueBackBoneNet(nn.Module):
-    def __init__(self, num_actions, checkpoint=None):
+    def __init__(self, num_actions, feature_planes=4, checkpoint=None):
         super(PolicyValueBackBoneNet, self).__init__()
+        self.feature_planes = feature_planes
         self.num_actions = num_actions
-        self.conv1 = BasicConv2d(4, 32, 3, 1, 1, use_batchnorm=False, bias=False)
+        self.conv1 = BasicConv2d(self.feature_planes, 32, 3, 1, 1, use_batchnorm=False, bias=False)
         self.conv2 = BasicConv2d(32, 64, 3, 1, 1, use_batchnorm=False, bias=False)
         self.conv3 = BasicConv2d(64, 128, 3, 1, 1, use_batchnorm=False, bias=False)
         self.action_head_conv1 = BasicConv2d(128, 4, 1, 1, 0, use_batchnorm=False, bias=False)
@@ -87,7 +88,7 @@ class PolicyValueNet(object):
         self.policy_value_model = PolicyValueBackBoneNet(self.board_height * self.board_width, self.checkpoint)
         self.policy_value_model.cuda()
 
-    def resume(self,checkpoint):
+    def resume(self, checkpoint):
         self.policy_value_model.resume(checkpoint)
 
     def policy_value_fn(self, board):

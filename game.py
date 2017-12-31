@@ -16,7 +16,7 @@ class Board(object):
         self.height = int(kwargs.get('height', 8))
         self.states = {} # board states, key:move as location on the board, value:player as pieces type
         self.n_in_row = int(kwargs.get('n_in_row', 5)) # need how many pieces in a row to win
-        self.feature_planes = int(kwargs.get('feature_planes', 8))
+        self.feature_planes = int(kwargs.get('feature_planes', 4))
         self.players = [1, 2] # player1 and player2
         
     def init_board(self, start_player=0):
@@ -52,17 +52,41 @@ class Board(object):
     def current_state(self): 
         """return the board state from the perspective of the current player
         shape: 4*width*height"""
-        
-        square_state = np.zeros((4, self.width, self.height))
+        if self.feature_planes == 4:
+            square_state = np.zeros((4, self.width, self.height))
+        elif self.feature_planes == 6:
+            square_state = np.zeros((6, self.width, self.height))
+        elif self.feature_planes == 8:
+            square_state = np.zeros((8, self.width, self.height))
         if self.states:
             moves, players = np.array(list(zip(*self.states.items())))
             move_curr = moves[players == self.current_player]
             move_oppo = moves[players != self.current_player]                           
             square_state[0][move_curr // self.width, move_curr % self.height] = 1.0
-            square_state[1][move_oppo // self.width, move_oppo % self.height] = 1.0   
-            square_state[2][self.last_move //self.width, self.last_move % self.height] = 1.0 # last move indication   
+            square_state[1][move_oppo // self.width, move_oppo % self.height] = 1.0
+            if self.feature_planes >= 6 and len(moves) > 2:
+                move_curr = moves[:-2][players[:-2] == self.current_player]
+                move_oppo = moves[:-2][players[:-2] != self.current_player]
+                square_state[2][move_curr // self.width, move_curr % self.height] = 1.0
+                square_state[3][move_oppo // self.width, move_oppo % self.height] = 1.0
+            elif self.feature_planes >= 8 and len(moves) > 4:
+                move_curr = moves[:-4][players[:-4] == self.current_player]
+                move_oppo = moves[:-4][players[:-4] != self.current_player]
+                square_state[4][move_curr // self.width, move_curr % self.height] = 1.0
+                square_state[5][move_oppo // self.width, move_oppo % self.height] = 1.0
+            if self.feature_planes == 4:
+                square_state[2][self.last_move //self.width, self.last_move % self.height] = 1.0 # last move indication
+            elif self.feature_planes == 6:
+                square_state[4][self.last_move //self.width, self.last_move % self.height] = 1.0 # last move indication
+            elif self.feature_planes == 8:
+                square_state[6][self.last_move //self.width, self.last_move % self.height] = 1.0 # last move indication
         if len(self.states)%2 == 0:
-            square_state[3][:,:] = 1.0
+            if self.feature_planes == 4:
+                square_state[3][:,:] = 1.0
+            elif self.feature_planes == 6:
+                square_state[5][:,:] = 1.0
+            elif self.feature_planes == 8:
+                square_state[7][:,:] = 1.0
         return square_state[:,::-1,:]
 
     def do_move(self, move):
