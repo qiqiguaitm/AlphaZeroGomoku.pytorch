@@ -260,7 +260,7 @@ class TrainPipeline():
                             cnt = cnt + 1
                         if cnt > self.batch_size and len(self.data_buffer) > self.batch_size:
                             break
-                        time.sleep(1)
+                        time.sleep(2)
                 else:
                     while True:
                         while self.data_queue.empty():
