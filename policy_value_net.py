@@ -23,15 +23,13 @@ class BasicConv2d(nn.Module):
         if self.use_batchnorm:
             self.bn = nn.BatchNorm2d(out_planes)
         self.act = nn.PReLU(out_planes)
-        # self.act = nn.ReLU(inplace=False)
-        # self.act = nn.Sigmoid()
+
 
     def forward(self, x):
         x = self.conv(x)
         if self.use_batchnorm:
             x = self.bn(x)
         x = self.act(x)
-        # x = self.act(x) * x
         return x
 
 
