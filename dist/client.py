@@ -4,6 +4,13 @@ import uuid
 import cPickle as pickle
 import time
 import subprocess
+from subprocess import Popen, PIPE, STDOUT
+try:
+    from subprocess import DEVNULL # py3k
+except ImportError:
+    import os
+    DEVNULL = open(os.devnull, 'wb')
+
 TunnelPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/')
 if not os.path.exists(TunnelPath):
     os.mkdir(TunnelPath)
@@ -15,8 +22,13 @@ def touch(fname):
 
 
 def upload(data_server_url, file_path):
-    cmd_upload = 'curl --referer "www.google.com" -F "file=@%s" %s' % (file_path, data_server_url)
-    os.system(cmd_upload)
+    cmd_upload = 'curl --referer "www.qiqiguaitm.com" -F "file=@%s" %s' % (file_path, data_server_url)
+    #os.system(cmd_upload)
+    t1 = time.time()
+    sub = Popen(cmd_upload, shell=True, stdin=PIPE, stdout=DEVNULL, stderr=STDOUT)
+    sub.wait()
+    t2 = time.time()
+    print('CMD SUCCESS:time_used:%s,%s'%(t2-t1,cmd_upload))
 
 
 def download(data_server_url, file_name, save_path):
@@ -24,8 +36,11 @@ def download(data_server_url, file_name, save_path):
         file_name = os.path.split(file_name)[-1]
     cmd_download = 'wget %s/%s -O %s --timeout=600 ' % (data_server_url, file_name, save_path + '.tmp')
     #os.system(cmd_download)
-    sub = subprocess.Popen(cmd_download, shell=True, stdout=subprocess.PIPE)
+    t1 = time.time()
+    sub = Popen(cmd_download, shell=True,  stdin=PIPE, stdout=DEVNULL, stderr=STDOUT)
     sub.wait()
+    t2 = time.time()
+    print('CMD SUCCESS:time_used:%s,%s' % (t2 - t1, cmd_download))
     if os.path.exists(save_path + '.tmp'):
         size = os.path.getsize(save_path + '.tmp')
     else:
