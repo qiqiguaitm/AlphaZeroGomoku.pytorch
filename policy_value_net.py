@@ -14,7 +14,7 @@ from game import *
 
 
 class BasicConv2d(nn.Module):
-    def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=0, use_batchnorm=False, bias=False):
+    def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=0, use_batchnorm=True, bias=False):
         super(BasicConv2d, self).__init__()
         self.conv = nn.Conv2d(in_planes, out_planes,
                               kernel_size=kernel_size, stride=stride,
@@ -35,19 +35,39 @@ class BasicConv2d(nn.Module):
         return x
 
 
+class ResidualBlock(nn.Module):
+    def __init__(self, planes, use_batchnorm=True):
+        super(ResidualBlock, self).__init__()
+        self.conv1_1 = BasicConv2d(planes, planes, 3, 1, 1, use_batchnorm=use_batchnorm, bias=False)
+        self.conv1_2 = BasicConv2d(planes, planes, 3, 1, 1, use_batchnorm=use_batchnorm, bias=False)
+
+    def forward(self, x):
+        x = self.conv1_2(self.conv1_1(x)) + x
+        return x
+
 class PolicyValueBackBoneNet(nn.Module):
     def __init__(self, num_actions, feature_planes=4, checkpoint=None):
         super(PolicyValueBackBoneNet, self).__init__()
         self.feature_planes = feature_planes
         self.num_actions = num_actions
-        self.conv1 = BasicConv2d(self.feature_planes, 32, 3, 1, 1, use_batchnorm=False, bias=False)
-        self.conv2 = BasicConv2d(32, 64, 3, 1, 1, use_batchnorm=False, bias=False)
-        self.conv3 = BasicConv2d(64, 128, 3, 1, 1, use_batchnorm=False, bias=False)
-        self.action_head_conv1 = BasicConv2d(128, 4, 1, 1, 0, use_batchnorm=False, bias=False)
-        self.action_head = nn.Linear(4 * self.num_actions, self.num_actions)
-        self.value_head_conv1 = BasicConv2d(128, 2, 1, 1, 0, use_batchnorm=False, bias=False)
-        self.value_head_fc1 = nn.Linear(2 * self.num_actions, 64)
-        self.value_head = nn.Linear(64, 1)
+
+        conv1 = BasicConv2d(self.feature_planes, 256, 3, 1, 1)
+        residuals = [ResidualBlock(256) for i in range(20)]
+        self.seqs = nn.Sequential(tuple([conv1]+residuals))
+
+        '''
+        conv1 = BasicConv2d(self.feature_planes, 32, 3, 1, 1)
+        conv2 = BasicConv2d(32, 64, 3, 1, 1)
+        conv3 = BasicConv2d(64, 128, 3, 1, 1)
+        conv4 = BasicConv2d(128, 256, 3, 1, 1)
+        self.seqs = nn.Sequential(conv1,conv2,conv3,conv4)
+        '''
+
+        self.action_head_conv1 = BasicConv2d(256, 2, 1, 1, 0, use_batchnorm=False, bias=False)
+        self.action_head = nn.Linear(2 * self.num_actions, self.num_actions)
+        self.value_head_conv1 = BasicConv2d(256, 1, 1, 1, 0, use_batchnorm=False, bias=False)
+        self.value_head_fc1 = nn.Linear(self.num_actions, 256)
+        self.value_head = nn.Linear(256, 1)
         self.resume(checkpoint)
 
     def resume(self, checkpoint):
@@ -60,9 +80,7 @@ class PolicyValueBackBoneNet(nn.Module):
             self.load_state_dict(model_dict)
 
     def forward(self, x):
-        net = self.conv1(x)
-        net = self.conv2(net)
-        net = self.conv3(net)
+        net = self.seqs(x)
         action_head_net = self.action_head_conv1(net)
         action_head_net = action_head_net.view(action_head_net.size(0), -1)
         action_scores = self.action_head(action_head_net)
