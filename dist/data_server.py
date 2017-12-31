@@ -6,13 +6,6 @@ This module builds on BaseHTTPServer by implementing the standard GET
 and HEAD requests in a fairly straightforward manner.
 
 """
-
-
-__version__ = "0.1"
-__all__ = ["SimpleHTTPRequestHandler"]
-__author__ = "zhangtianming"
-__home_page__ = "http://qiqiguaitm.github.io"
-
 import os
 import posixpath
 import BaseHTTPServer
