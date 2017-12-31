@@ -187,6 +187,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if l.endswith('undone'):
                     if l[:-6]+'done' in list:
                         shutil.move(l,l[:-7])
+            list = os.listdir(path)
         except os.error:
             self.send_error(404, "No permission to list directory")
             return None
