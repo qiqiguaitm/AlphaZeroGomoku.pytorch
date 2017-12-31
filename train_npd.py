@@ -28,7 +28,9 @@ from dist.client import *
 from dist.data_server import *
 
 DIST_DATA_URL = 'http://10.83.150.55:8000/'
-#DIST_DATA_URL = 'http://10.93.189.54:8000/'
+
+
+# DIST_DATA_URL = 'http://10.93.189.54:8000/'
 
 def get_equi_data(play_data, board_height, board_width):
     """
@@ -58,11 +60,11 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
     time.sleep(int(pid) * 5)
     n_epoch = 0
     while True:
-        if is_distributed:
-            download(data_server_url, model_file, model_file)
         if os.path.exists(model_file):
             while True:
                 try:
+                    if is_distributed:
+                        download(data_server_url, model_file, model_file)
                     checkpoint = torch.load(model_file)
                     break
                 except:
@@ -81,7 +83,7 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
             t1 = time.time()
             winner, play_data = game.start_self_play(mcts_player, temp=temp)
             t2 = time.time()
-            print('PID:%s,N_EPOCH:%s,N_GAME:%s end, time_used:%s' % (pid, n_epoch, n_game,t2-t1))
+            print('PID:%s,N_EPOCH:%s,N_GAME:%s end, time_used:%s' % (pid, n_epoch, n_game, t2 - t1))
             # augment the data
             play_data = get_equi_data(play_data, board_width, board_height)
             print('PID:%s,N_EPOCH:%s,N_GAME:%s send data ....' % (pid, n_epoch, n_game))
@@ -263,7 +265,6 @@ class TrainPipeline():
             proc.start()
         self.collect_procs = procs
 
-
     def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         try:
             for i in range(self.game_batch_num):
@@ -301,7 +302,9 @@ class TrainPipeline():
                          'entropy': entropy}
                 torch.save(state, self.model_file + '.undone')
                 shutil.move(self.model_file + '.undone', self.model_file)
-                upload(data_server_url, self.model_file)
+                # upload(data_server_url, self.model_file)
+                torch.save(state, self.model_file + '.undone')
+                shutil.copy(self.model_file + '.undone', os.path.join(TunnelPath, os.path.split(self.model_file)[-1]))
                 # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
                     t1 = time.time()
