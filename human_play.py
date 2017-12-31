@@ -52,7 +52,6 @@ def run():
         game = Game(board)
 
         checkpoint = torch.load(model_file)
-
         #best_policy_model = PolicyValueNet(width, height, feature_planes, checkpoint)
         #mcts_player = MCTSPlayer(best_policy_model.policy_value_fn, c_puct=5,
         #                         n_playout=400)  # set larger n_playout for better performance
