@@ -76,16 +76,18 @@ class PolicyValueBackBoneNet(nn.Module):
 class PolicyValueNet(object):
     """policy-value network """
 
-    def __init__(self, board_width, board_height, checkpoint=None):
+    def __init__(self, board_width, board_height, feature_planes=4, checkpoint=None):
         self.board_width = board_width
         self.board_height = board_height
+        self.feature_planes = feature_planes
         self.checkpoint = checkpoint
         self.l2_const = 1e-4  # coef of l2 penalty
         self.create_policy_value_net()
         self.optimizer = optim.Adam(self.policy_value_model.parameters(), lr=3e-2)
 
     def create_policy_value_net(self):
-        self.policy_value_model = PolicyValueBackBoneNet(self.board_height * self.board_width, self.checkpoint)
+        self.policy_value_model = PolicyValueBackBoneNet(self.board_height * self.board_width,
+                                                         self.feature_planes, self.checkpoint)
         self.policy_value_model.cuda()
 
     def resume(self, checkpoint):

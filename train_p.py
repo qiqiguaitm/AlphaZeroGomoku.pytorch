@@ -43,12 +43,12 @@ def get_equi_data(play_data, board_height, board_width):
 
 
 def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
-                          board_width, board_height,feature_planes,
+                          board_width, board_height, feature_planes,
                           c_puct, n_playout, temp,
                           model_file, n_games=1):
     """collect self-play data for training"""
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-    policy_value_net = PolicyValueNet(board_width, board_height,feature_planes)
+    policy_value_net = PolicyValueNet(board_width, board_height, feature_planes)
     mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                              n_playout=n_playout, is_selfplay=1)
     while True:
@@ -68,13 +68,13 @@ def collect_selfplay_data(gpu_id, data_queue, data_queue_lock, game,
             checkpoint = None
 
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-        policy_value_net = PolicyValueNet(board_width, board_height,feature_planes, checkpoint)
+        policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, checkpoint)
         mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                  n_playout=n_playout, is_selfplay=1)
 
 
 def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
-                    board_width, board_height,feature_planes,
+                    board_width, board_height, feature_planes,
                     c_puct, n_playout, pure_mcts_playout_num,
                     model_file):
     """
@@ -88,7 +88,7 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
         job_queue.get()
         checkpoint = torch.load(model_file)
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-        policy_value_net = PolicyValueNet(board_width, board_height,feature_planes, checkpoint)
+        policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, checkpoint)
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
         pure_mcts_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
@@ -106,7 +106,7 @@ class TrainPipeline():
         self.feature_planes = 4
         self.n_in_row = 5
         self.board = Board(width=self.board_width, height=self.board_height,
-                           feature_planes=self.feature_planes,n_in_row=self.n_in_row)
+                           feature_planes=self.feature_planes, n_in_row=self.n_in_row)
         self.game = Game(self.board)
         # training params
         self.learn_rate = 5e-3
@@ -142,7 +142,7 @@ class TrainPipeline():
         gpu_id = self.gpus[self.num_inst % len(self.gpus)]
         self.num_inst += 1
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height,self.feature_planes)
+        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, self.feature_planes)
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                       n_playout=self.n_playout, is_selfplay=1)
 
@@ -194,7 +194,7 @@ class TrainPipeline():
             self.num_inst += 1
             args = (gpu_id, self.win_queue, self.job_queue, self.job_queue_lock,
                     self.game, start_role,
-                    self.board_width, self.board_height,self.feature_planes,
+                    self.board_width, self.board_height, self.feature_planes,
                     self.c_puct, self.n_playout, self.pure_mcts_playout_num,
                     self.model_file,)
             proc = multiprocessing.Process(target=policy_evaluate, args=args)
@@ -228,7 +228,7 @@ class TrainPipeline():
             self.num_inst += 1
             proc = multiprocessing.Process(target=collect_selfplay_data,
                                            args=(gpu_id, self.data_queue, self.data_queue_lock, self.game,
-                                                 self.board_width, self.board_height,self.feature_planes,
+                                                 self.board_width, self.board_height, self.feature_planes,
                                                  self.c_puct, self.n_playout, self.temp,
                                                  self.model_file, 1,))
             procs.append(proc)
