@@ -62,6 +62,7 @@ def download_samples():
         except Exception, e:
             print e
             continue
+    return samples
 
 
 
