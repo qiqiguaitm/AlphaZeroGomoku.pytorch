@@ -389,6 +389,7 @@ def main(args):
             training_pipeline = TrainPipeline()
             print('start dist evaluating')
             training_pipeline.policy_evaluate()
+            training_pipeline.eval(is_distributed=True,data_server_url=args.data_server_url)
 
 if __name__ == '__main__':
     main(parse_arguments())
