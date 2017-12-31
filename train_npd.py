@@ -27,8 +27,9 @@ import argparse
 from dist.client import *
 from dist.data_server import *
 
-#DIST_DATA_URL = 'http://10.83.150.55:8000/'
+# DIST_DATA_URL = 'http://10.83.150.55:8000/'
 DIST_DATA_URL = 'http://10.93.189.54:8000/'
+
 
 def get_equi_data(play_data, board_height, board_width):
     """
@@ -150,7 +151,7 @@ class TrainPipeline():
         self.best_win_ratio = 0.0
         # num of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
         self.pure_mcts_playout_num = 1000
-        #self.gpus = ['0', '1', '2', '3']
+        # self.gpus = ['0', '1', '2', '3']
         self.gpus = [str(i) for i in range(int(torch.cuda.device_count()))]
         self.num_inst = 0
         self.model_file = 'checkpoint.pth.tar'
@@ -264,21 +265,19 @@ class TrainPipeline():
             proc.start()
         self.collect_procs = procs
 
-    def eval(self,is_distributed=False, data_server_url=DIST_DATA_URL):
+    def eval(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         # check the performance of the current model，and save the model params
         idx = 0
         while True:
-            if os.path.exists(self.model_file):
-                while True:
-                    try:
-                        if is_distributed:
-                            download(data_server_url, self.model_file, self.model_file)
-                        checkpoint = torch.load(self.model_file)
-                        break
-                    except:
-                        continue
-            else:
-                checkpoint = None
+            checkpoint = None
+            while checkpoint is None:
+                try:
+                    if is_distributed:
+                        download(data_server_url, self.model_file, self.model_file)
+                    checkpoint = torch.load(self.model_file)
+                    break
+                except:
+                    continue
             t1 = time.time()
             print("current self-play batch: {}, start to evaluate...".format(idx + 1))
             idx = idx + 1
@@ -352,7 +351,7 @@ def parse_arguments():
                         choices=['1', '0'],
                         help='run mode: dist or local')
     parser.add_argument('--role', metavar='ROLE', default='master',
-                        choices=['worker', 'master','evaluator'],
+                        choices=['worker', 'master', 'evaluator'],
                         help='run role: worker or master')
     parser.add_argument('--data_server_url', metavar='URL', default=DIST_DATA_URL,
                         type=str,
@@ -391,7 +390,8 @@ def main(args):
             training_pipeline = TrainPipeline()
             print('start dist evaluating')
             training_pipeline.policy_evaluate()
-            training_pipeline.eval(is_distributed=True,data_server_url=args.data_server_url)
+            training_pipeline.eval(is_distributed=True, data_server_url=args.data_server_url)
+
 
 if __name__ == '__main__':
     main(parse_arguments())
