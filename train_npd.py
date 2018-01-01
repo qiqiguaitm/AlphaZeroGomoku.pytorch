@@ -281,7 +281,6 @@ class TrainPipeline():
                     continue
             t1 = time.time()
             print("current self-play batch: {}, start to evaluate...".format(idx + 1))
-            idx = idx + 1
             win_ratio = self.get_win_ratio()
             if win_ratio > self.best_win_ratio:
                 print("New best policy!!!!!!!!")
@@ -291,7 +290,8 @@ class TrainPipeline():
                     self.best_win_ratio = 0.0
                 shutil.copy(self.model_file, self.best_model_file)
             t2 = time.time()
-            print("current self-play batch: {}, end to evaluate...,time_used:{:.3f}".format(i + 1, t2 - t1))
+            print("current self-play batch: {}, end to evaluate...,time_used:{:.3f}".format(idx + 1, t2 - t1))
+            idx = idx + 1
 
     def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
         try:
