@@ -26,10 +26,11 @@
 
 bool RenjuProtocolCLI::beginSession(int argc, char const *argv[]) {
     // Print usage if no arguments provided
-    if (argc < 2) {
+    if (argc < 4) {
         std::cerr << "Usage: renju" << std::endl;
-        std::cerr << "        -s <state>       The game state (required)" << std::endl;
-        std::cerr << "       [-p <ai_player>]  AI player (1: black, 2: white; default: 1)" << std::endl;
+        std::cerr << "       -b <board_size>       The game board size (required)" << std::endl;
+        std::cerr << "       -s <state>       The game state (required)" << std::endl;
+        std::cerr << "       -p <ai_player>  AI player (1: black, 2: white; default: 1)" << std::endl;
         std::cerr << "       [-d <depth>]      AI Search depth (iterative deepening)" << std::endl;
         std::cerr << "       [-l <time_limit>] Execution time limit for iterative deepening (5000)" << std::endl;
         std::cerr << "       [-t <threads>]    Number of threads (1)" << std::endl;
@@ -38,8 +39,7 @@ bool RenjuProtocolCLI::beginSession(int argc, char const *argv[]) {
 
     // Initialize arguments
     g_board_size = 19;
-    g_gs_size = (unsigned int)g_board_size * g_board_size;
-    char gs_string[362] = {0};
+    char *gs_string;
     int ai_player = 1;
     int num_threads = 1;
     int search_depth = -1;
@@ -48,14 +48,22 @@ bool RenjuProtocolCLI::beginSession(int argc, char const *argv[]) {
     // Iterate through arguments
     for (int i = 0; i < argc; i++) {
         const char *arg = argv[i];
-
-        if (strncmp(arg, "-s", 2) == 0) {
+        if (strncmp(arg, "-b", 2) == 0) {
+            // game board size
+            if (i >= argc - 1) continue;
+            parseIntegerArgument(argv[i + 1], 3, &g_board_size);
+            g_gs_size = (unsigned int)g_board_size * g_board_size;
+            gs_string = new char[g_gs_size+1];
+            for (int i=0; i<g_gs_size+1; ++i)
+                gs_string[i] = 0;
+        }
+        else if (strncmp(arg, "-s", 2) == 0) {
             // Check if value exists
             if (i >= argc - 1) continue;
 
             // Validate and copy state
-            if (validateString(argv[i + 1], 361) == 361)
-                memcpy(gs_string, argv[i + 1], 361);
+            if (validateString(argv[i + 1], g_gs_size) == g_gs_size)
+                memcpy(gs_string, argv[i + 1], g_gs_size);
 
         } else if (strncmp(arg, "-p", 2) == 0) {
             // AI player ID
@@ -79,7 +87,8 @@ bool RenjuProtocolCLI::beginSession(int argc, char const *argv[]) {
 
         } else if (strncmp(arg, "test", 4) == 0) {
             // Build test data
-            memcpy(gs_string, "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002121000000000000001211112000000000000022122110000000000001211002200000000000002010200000000000000000200000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000", 362);
+            memcpy(gs_string, "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002121000000000000001211112000000000000022122110000000000001211002200000000000002010200000000000000000200000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+             g_gs_size+1);
             search_depth = 8;
             ai_player = 2;
         }

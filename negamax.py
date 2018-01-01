@@ -17,14 +17,17 @@ class NegamaxPlayer(object):
 
     def get_action(self, board):
         sensible_moves = board.availables
-        if len(sensible_moves) == 19*19:
-            return 180
+        if len(sensible_moves) == board.width * board.height:
+            return (board.width * board.height)/2
         elif len(sensible_moves) > 0:
             state_line = board.state_line()
-            cmd = self.cmd_path + ' -s ' + state_line + ' -p ' + str(self.player)
+            cmd = self.cmd_path + ' -b ' + str(board.height) + ' -s ' + state_line \
+                  + ' -p ' + str(self.player) + ' -d ' + str(self.search_depth)
             sub = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             sub.wait()
-            ret = json.loads(sub.stdout.read())
+            ret = sub.stdout.read()
+            print ret
+            ret = json.loads(ret)
             move_c = ret['result']['move_c']
             move_r = ret['result']['move_r']
             move = int(move_r) * board.width + int(move_c)
