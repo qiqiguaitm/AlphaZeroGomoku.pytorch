@@ -57,7 +57,8 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                           model_file, n_games=1,
                           is_distributed=False, data_server_url=DIST_DATA_URL):
     """collect self-play data for training"""
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+    if torch.cuda.device_count() > 1:
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     time.sleep(int(pid) * 5)
     n_epoch = 0
     while True:
@@ -72,7 +73,8 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                     continue
         else:
             checkpoint = None
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+        if torch.cuda.device_count() > 1:
+            os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval', checkpoint=checkpoint)
         mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                  n_playout=n_playout, is_selfplay=1)
@@ -114,7 +116,8 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
             time.sleep(1)
         job_queue.get()
         checkpoint = torch.load(model_file)
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+        if torch.cuda.device_count() > 1:
+            os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, checkpoint=checkpoint)
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
