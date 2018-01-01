@@ -105,8 +105,8 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
 class TrainPipeline():
     def __init__(self):
         # params of the board and the game
-        self.board_width = 19
-        self.board_height = 19
+        self.board_width = 9
+        self.board_height = 9
         self.feature_planes = 8
         self.n_in_row = 5
         self.board = Board(width=self.board_width, height=self.board_height,
