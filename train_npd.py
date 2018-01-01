@@ -314,7 +314,7 @@ class TrainPipeline():
                                     break
                             except:
                                 break
-                        if cnt > self.batch_size:
+                        if cnt >= self.batch_size:
                             break
                         else:
                             print("batch i:{},collecting continue,samples:{},time_used:{:.3f}".format(
