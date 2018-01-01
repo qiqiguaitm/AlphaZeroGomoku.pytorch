@@ -26,7 +26,6 @@ class NegamaxPlayer(object):
             sub = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             sub.wait()
             ret = sub.stdout.read()
-            print ret
             ret = json.loads(ret)
             move_c = ret['result']['move_c']
             move_r = ret['result']['move_r']
