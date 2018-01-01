@@ -130,6 +130,7 @@ class TrainPipeline():
         self.best_win_ratio = 0.0
         # num of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
         self.pure_mcts_playout_num = 1000
+        self.negamax_search_depth = 2
         self.gpus = ['0', '1', '2', '3']
         self.num_inst = 0
         self.model_file = 'checkpoint.pth.tar'

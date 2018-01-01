@@ -23,7 +23,7 @@ class Gomoku(object):
 
         # uncomment the following line to play with pure MCTS (its much weaker even with a larger n_playout)
         # ai_player = MCTS_Pure(c_puct=5, n_playout=1000)
-        ai_player = NegamaxPlayer(cmd_path='negamax/build/renju')
+        ai_player = NegamaxPlayer(cmd_path='negamax/build/renju',search_depth=2)
         self.ai_player = ai_player
         self.waiting_for_play = True
         self.chessboard = np.zeros((self.height,self.width))

@@ -3,7 +3,7 @@ import json
 class NegamaxPlayer(object):
     """AI player based on MCTS"""
 
-    def __init__(self,cmd_path,search_depth=-1,time_limit=5500,threads=1):
+    def __init__(self,cmd_path,search_depth=2,time_limit=5500,threads=1):
         self.cmd_path = cmd_path
         self.search_depth = search_depth
         self.time_limit = time_limit
