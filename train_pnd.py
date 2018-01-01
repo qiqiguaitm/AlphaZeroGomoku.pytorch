@@ -198,6 +198,8 @@ class TrainPipeline():
         new_probs, new_v = self.policy_value_net.policy_value_model(state_batch_v)
         new_probs, new_v = new_probs.data.cpu().numpy(), new_v.data.cpu().numpy()
         kl = np.mean(np.sum(old_probs * (np.log(old_probs + 1e-10) - np.log(new_probs + 1e-10)), axis=1))
+
+
         # adaptively adjust the learning rate
         if kl > self.kl_targ * 2 and self.lr_multiplier > 0.1:
             self.lr_multiplier /= 1.5
