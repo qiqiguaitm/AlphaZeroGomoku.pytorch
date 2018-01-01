@@ -24,8 +24,8 @@ from negamax import NegamaxPlayer
 class TrainPipeline():
     def __init__(self):
         # params of the board and the game
-        self.board_width = 8
-        self.board_height = 8
+        self.board_width = 11
+        self.board_height = 11
         self.n_in_row = 5
         self.board = Board(width=self.board_width, height=self.board_height, n_in_row=self.n_in_row)
         self.game = Game(self.board)
