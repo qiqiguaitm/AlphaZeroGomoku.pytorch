@@ -45,8 +45,8 @@ class NativeUI(QWidget):
         screen = QDesktopWidget().screenGeometry()
         size =  self.geometry()
 
-        self.setGeometry((screen.width()-size.width())/2, 
-                        (screen.height()-size.height())/2,
+        self.setGeometry((screen.width()-size.width())/3,
+                        (screen.height()-size.height())/3,
                         Nx*self.sizeunit, Ny*self.sizeunit)
         self.setWindowTitle("Gomoku")
 
@@ -64,10 +64,8 @@ class NativeUI(QWidget):
         self.drawChessboard(qp)
         self.drawChesses(qp)
         self.chooseChess(qp)
-        '''
         if self.playstatus and not self.isgameend:
             self.waitforanother(qp)
-        '''
         if self.isgameend:
             self.drawgameend(qp)
         qp.end()
@@ -153,6 +151,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     chessboardinfo = np.random.randint(-1,2,size=(10,10))
     sizeunit = 50
-    ex = nativeUI(chessboardinfo=chessboardinfo,sizeunit=sizeunit)
+    ex = NativeUI(chessboardinfo=chessboardinfo,sizeunit=sizeunit)
     sys.exit(app.exec_())
 

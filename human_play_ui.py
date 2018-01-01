@@ -16,7 +16,7 @@ class Gomoku(object):
         model_file = 'checkpoint_best.pth.tar'
         self.board = Board(width=self.width, height=self.height, n_in_row=n)
         self.board.init_board(start_player=0)
-        checkpoint = torch.load(model_file)
+        # checkpoint = torch.load(model_file)
         # best_policy_model = PolicyValueNet(width, height, feature_planes, mode='eval', checkpoint=checkpoint)
         # ai_player = MCTSPlayer(best_policy_model.policy_value_fn, c_puct=5,
         #                         n_playout=400)  # set larger n_playout for better performance
@@ -90,6 +90,9 @@ class Gomoku(object):
             print(role + " Win")
         self.ui.gameend(role)
 
+
 if __name__=='__main__':
     gomoku = Gomoku()
+    print('game start ......')
     gomoku.run(ai_fist=False)
+    print('game over.')

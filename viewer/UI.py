@@ -19,7 +19,10 @@ class UI(threading.Thread):
         print('Init UI...')
         self.app = QApplication(sys.argv)
         self.UI = NativeUI.NativeUI(pressaction=self.pressaction, chessboardinfo=self.chessboardinfo,role=self.human_role)
+        print('app exec...')
         self.app.exec_()
+        print('app exit')
+
 
     def setchessboard(self,chessboardinfo):
         return self.UI.setchessboard(chessboardinfo)
