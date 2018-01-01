@@ -317,6 +317,7 @@ class TrainPipeline():
                         if cnt >= self.batch_size:
                             break
                         else:
+                            t2 = time.time()
                             print("batch i:{},collecting continue,samples:{},time_used:{:.3f}".format(
                                 i + 1, cnt, t2 - t1))
                         time.sleep(2)
