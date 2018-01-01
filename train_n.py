@@ -26,8 +26,10 @@ class TrainPipeline():
         # params of the board and the game
         self.board_width = 11
         self.board_height = 11
+        self.feature_planes = 8
         self.n_in_row = 5
-        self.board = Board(width=self.board_width, height=self.board_height, n_in_row=self.n_in_row)
+        self.board = Board(width=self.board_width, height=self.board_height,
+                           feature_planes=self.feature_planes, n_in_row=self.n_in_row)
         self.game = Game(self.board)
         # training params
         self.learn_rate = 5e-3
@@ -51,7 +53,7 @@ class TrainPipeline():
         #        policy_param = pickle.load(open('current_policy.model', 'rb'))
         #        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, net_params = policy_param)
         # start training from a new policy-value net
-        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height)
+        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height,feature_planes=self.feature_planes)
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                       n_playout=self.n_playout, is_selfplay=1)
 
