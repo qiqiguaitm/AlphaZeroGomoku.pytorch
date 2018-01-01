@@ -59,7 +59,7 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
     """collect self-play data for training"""
     if torch.cuda.device_count() >= gpu_id:
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-    time.sleep(int(pid) * 5)
+    #time.sleep(int(pid) * 5)
     n_epoch = 0
     while True:
         if os.path.exists(model_file):
@@ -145,7 +145,7 @@ class TrainPipeline():
         self.temp = 1.0  # the temperature param
         self.n_playout = 400  # num of simulations for each move
         self.c_puct = 5
-        self.buffer_size = 10000
+        self.buffer_size = 512 * 20
         self.batch_size = 512  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.play_batch_size = 1
@@ -259,7 +259,7 @@ class TrainPipeline():
         """run the training pipeline"""
         self.data_queue = self.manager.Queue(maxsize=5120)
         self.data_queue_lock = self.manager.Lock()
-        NUM_PROCESS = 24
+        NUM_PROCESS = 12
         procs = []
         for idx in range(NUM_PROCESS):
             gpu_id = self.gpus[self.num_inst % len(self.gpus)]
