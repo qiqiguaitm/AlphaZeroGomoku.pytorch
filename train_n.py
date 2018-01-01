@@ -20,6 +20,7 @@ from mcts_pure import MCTSPlayer as MCTS_Pure
 from mcts_alphazero import MCTSPlayer
 from negamax import NegamaxPlayer
 
+
 class TrainPipeline():
     def __init__(self):
         # params of the board and the game
@@ -112,7 +113,7 @@ class TrainPipeline():
         t2 = time.time()
         print(
             "kl:{:.5f},lr_multiplier:{:.3f},loss:{},entropy:{},explained_var_old:{:.3f},explained_var_new:{:.3f},time_used:{:.3f}".format(
-                kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new,t2-t1))
+                kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new, t2 - t1))
         return loss, entropy
 
     def policy_evaluate(self, n_games=10):
@@ -122,7 +123,7 @@ class TrainPipeline():
         """
         current_mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                          n_playout=self.n_playout)
-        refer_player = NegamaxPlayer(cmd_path='negamax/build/renju',search_depth=self.negamax_search_depth)
+        refer_player = NegamaxPlayer(cmd_path='negamax/build/renju', search_depth=self.negamax_search_depth)
         win_cnt = defaultdict(int)
         for i in range(n_games):
             winner = self.game.start_play(current_mcts_player, refer_player, start_player=i % 2, is_shown=0)
@@ -139,7 +140,7 @@ class TrainPipeline():
                 t1 = time.time()
                 self.collect_selfplay_data(self.play_batch_size)
                 t2 = time.time()
-                print("batch i:{}, episode_len:{},time_used:{:.3f}".format(i + 1, self.episode_len, t2-t1))
+                print("batch i:{}, episode_len:{},time_used:{:.3f}".format(i + 1, self.episode_len, t2 - t1))
                 if len(self.data_buffer) > self.batch_size:
                     loss, entropy = self.policy_update()
                 # check the performance of the current model，and save the model params
@@ -152,8 +153,10 @@ class TrainPipeline():
                         is_best = True
                         print("New best policy!!!!!!!!")
                         self.best_win_ratio = win_ratio
-                        if self.best_win_ratio == 1.0 and self.negamax_search_depth < 20:
+                        if self.best_win_ratio == 1.0 and self.negamax_search_depth < 20 and self.negamax_search_depth != -1:
                             self.negamax_search_depth += 2
+                            if self.negamax_search_depth >= 20:
+                                self.negamax_search_depth = -1
                             self.best_win_ratio = 0.0
                     save_checkpoint({
                         'state_dict': self.policy_value_net.policy_value_model.state_dict(),
@@ -161,7 +164,7 @@ class TrainPipeline():
                         'optimizer': self.policy_value_net.optimizer.state_dict(),
                     }, is_best)
                     t2 = time.time()
-                    print("current self-play batch: {}, end to evaluate...,time_used:{:.3f}".format(i + 1,t2-t1))
+                    print("current self-play batch: {}, end to evaluate...,time_used:{:.3f}".format(i + 1, t2 - t1))
 
         except KeyboardInterrupt:
             print('\n\rquit')
