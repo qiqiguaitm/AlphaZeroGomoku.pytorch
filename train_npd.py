@@ -117,8 +117,8 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
         policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, checkpoint=checkpoint)
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
-        # refer_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
-        refer_player = NegamaxPlayer(cmd_path='negamax/build/renju')
+        refer_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
+        #refer_player = NegamaxPlayer(cmd_path='negamax/build/renju')
         winner = game.start_play(current_mcts_player, refer_player, start_player=role, is_shown=0)
         job_queue_lock.acquire()
         win_queue.put(winner)
@@ -187,6 +187,7 @@ class TrainPipeline():
                                                                            self.learn_rate * self.lr_multiplier)
         t22 = time.time()
         old_probs, old_v = old_probs.data.cpu().numpy(), old_v.data.cpu().numpy()
+        '''
         for i in range(self.epochs - 1):
             new_probs, new_v, loss, entropy = self.policy_value_net.train_step(state_batch_v, mcts_probs_batch_v,
                                                                                winner_batch_v,
@@ -195,6 +196,7 @@ class TrainPipeline():
             kl = np.mean(np.sum(old_probs * (np.log(old_probs + 1e-10) - np.log(new_probs + 1e-10)), axis=1))
             if kl > self.kl_targ * 4:  # early stopping if D_KL diverges badly
                 break
+        '''
         new_probs, new_v = self.policy_value_net.policy_value_model(state_batch_v)
         new_probs, new_v = new_probs.data.cpu().numpy(), new_v.data.cpu().numpy()
         kl = np.mean(np.sum(old_probs * (np.log(old_probs + 1e-10) - np.log(new_probs + 1e-10)), axis=1))
