@@ -107,7 +107,8 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
     Evaluate the trained policy by playing games against the pure MCTS player
     Note: this is only for monitoring the progress of training
     """
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+    if torch.cuda.device_count() > 1:
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     while True:
         while job_queue.empty():
             time.sleep(1)

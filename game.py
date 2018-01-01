@@ -182,10 +182,9 @@ class Game(object):
                 elif p == player2:
                     print('O'.center(4), end='')
                 else:
-                    print('_'.center(4), end='')
+                    print('.'.center(4), end='')
             print()
 
-            
     def start_play(self, player1, player2, start_player=0, is_shown=1):
         """
         start a game between two players
