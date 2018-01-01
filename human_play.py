@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-human VS AI models
-Input your move in the format: 2,3
-
-@author: Junxiao Song
-"""
-
 from __future__ import print_function
 import torch
 from game import Board, Game
@@ -45,7 +38,7 @@ class Human(object):
 
 def run():
     n = 5
-    width, height = 9, 9
+    width, height = 19, 19
     feature_planes = 8
     model_file = 'checkpoint_best.pth.tar'
     try:
