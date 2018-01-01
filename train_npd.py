@@ -27,8 +27,8 @@ import argparse
 from dist.client import *
 from dist.data_server import *
 
-DIST_DATA_URL = 'http://10.83.150.55:8000/'
-#DIST_DATA_URL = 'http://10.93.189.54:8000/'
+# DIST_DATA_URL = 'http://10.83.150.55:8000/'
+DIST_DATA_URL = 'http://10.93.189.54:8000/'
 
 
 def get_equi_data(play_data, board_height, board_width):
@@ -152,7 +152,7 @@ class TrainPipeline():
         # num of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
         self.pure_mcts_playout_num = 1000
         self.gpus = ['0', '1', '2', '3']
-        #self.gpus = ['0']
+        # self.gpus = ['0']
         # self.gpus = [str(i) for i in range(int(torch.cuda.device_count()))]
         self.num_inst = 0
         self.model_file = 'checkpoint.pth.tar'
@@ -294,6 +294,7 @@ class TrainPipeline():
             idx = idx + 1
 
     def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
+        samples_holder = deque(maxlen=self.buffer_size * 300)
         try:
             for i in range(self.game_batch_num):
                 t1 = time.time()
@@ -301,16 +302,23 @@ class TrainPipeline():
                 if is_distributed:
                     while True:
                         samples = download_samples()
-                        for sample in samples:
-                            self.data_buffer.append(sample)
-                            cnt = cnt + 1
-                        if len(samples) > 0:
-                            print(
-                                "batch i:{}, collecting, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(
-                                    self.data_buffer),
-                                                                                                      time.time() - t1))
-                        if len(self.data_buffer) > self.batch_size:
+                        samples_holder.extend(samples)
+                        while True:
+                            try:
+                                self.data_buffer.append(samples_holder.popleft())
+                                cnt = cnt + 1
+                                if cnt >= self.batch_size:
+                                    t2 = time.time()
+                                    print("batch i:{},collecting finished,samples:{},time_used:{:.3f}".format(
+                                        i + 1, cnt, t2 - t1))
+                                    break
+                            except:
+                                break
+                        if cnt > self.batch_size:
                             break
+                        else:
+                            print("batch i:{},collecting continue,samples:{},time_used:{:.3f}".format(
+                                i + 1, cnt, t2 - t1))
                         time.sleep(2)
                 else:
                     while True:
