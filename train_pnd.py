@@ -141,7 +141,7 @@ class TrainPipeline():
         self.n_playout = 800  # num of simulations for each move
         self.c_puct = 5
         self.buffer_size = 512 * 20
-        self.batch_size = 512 * 4  # mini-batch size for training
+        self.batch_size = 512 * 2  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.play_batch_size = 1
         self.epochs = 5  # num of train_steps for each update
