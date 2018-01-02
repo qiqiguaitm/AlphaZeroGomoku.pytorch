@@ -221,7 +221,7 @@ class TrainPipeline():
         self.job_queue = self.manager.Queue(maxsize=self.n_games_eval)
         self.job_queue_lock = self.manager.Lock()
         procs = []
-        NUM_PROCESS = self.n_games_eval
+        NUM_PROCESS = 8
         for idx in range(NUM_PROCESS):
             start_role = idx % 2
             gpu_id = self.gpus[self.num_inst % len(self.gpus)]
