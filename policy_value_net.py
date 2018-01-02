@@ -111,7 +111,7 @@ class PolicyValueNet(object):
                                   weight_decay=weight_decay, nesterov=True)
         elif optimi_str == 'adam':
             optimizer = optim.Adam(model.parameters(), lr=lr,
-                                   weight_decay=weight_decay, betas=(args.beta1, 0.999))
+                                   weight_decay=weight_decay)
         elif optimi_str == 'adagrad':
             optimizer = optim.Adagrad(model.parameters(),
                                       lr=lr,
