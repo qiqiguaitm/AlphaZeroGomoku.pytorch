@@ -337,7 +337,12 @@ class TrainPipeline():
                             break
                 t2 = time.time()
                 print("batch i:{}, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(self.data_buffer), t2 - t1))
-                loss, entropy = self.policy_update()
+                for i  in range(5):
+                    try:
+                        loss, entropy = self.policy_update()
+                        break
+                    except:
+                        continue
                 state = {'state_dict': self.policy_value_net.policy_value_model.state_dict(),
                          'optim_dict': self.policy_value_net.optimizer.state_dict(),
                          'loss': loss,
