@@ -140,8 +140,9 @@ class TrainPipeline():
         #self.n_playout = 400  # num of simulations for each move
         self.n_playout = 800  # num of simulations for each move
         self.c_puct = 5
-        self.buffer_size = 512 * 20
+
         self.batch_size = 512 * 4  # mini-batch size for training
+        self.buffer_size = self.batch_size * 20
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.play_batch_size = 1
         self.epochs = 5  # num of train_steps for each update
@@ -300,7 +301,7 @@ class TrainPipeline():
             idx = idx + 1
 
     def train(self, is_distributed=False, data_server_url=DIST_DATA_URL):
-        samples_holder = deque(maxlen=self.buffer_size * 300)
+        samples_holder = deque(maxlen=self.batch_size * 300)
         try:
             for i in range(self.game_batch_num):
                 t1 = time.time()
