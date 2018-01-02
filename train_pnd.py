@@ -27,10 +27,10 @@ import argparse
 from dist.client import *
 from dist.data_server import *
 
-#DIST_DATA_URL = 'http://10.83.150.55:8000/'
+DIST_DATA_URL = 'http://10.83.150.55:8000/'
 
 
-DIST_DATA_URL = 'http://10.93.189.54:8000/'
+# DIST_DATA_URL = 'http://10.93.189.54:8000/'
 
 
 def get_equi_data(play_data, board_height, board_width):
@@ -115,8 +115,8 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
         policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, checkpoint=checkpoint)
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
-        #refer_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
-        refer_player = NegamaxPlayer(cmd_path='negamax/build/renju',search_depth=search_depth)
+        # refer_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
+        refer_player = NegamaxPlayer(cmd_path='negamax/build/renju', search_depth=search_depth)
         winner = game.start_play(current_mcts_player, refer_player, start_player=role, is_shown=0)
         job_queue_lock.acquire()
         win_queue.put(winner)
@@ -137,7 +137,7 @@ class TrainPipeline():
         self.learn_rate = 5e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
-        #self.n_playout = 400  # num of simulations for each move
+        # self.n_playout = 400  # num of simulations for each move
         self.n_playout = 800  # num of simulations for each move
         self.c_puct = 5
 
@@ -167,7 +167,8 @@ class TrainPipeline():
         checkpoint = None
         if os.path.exists(self.model_file):
             checkpoint = torch.load(self.model_file)
-        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, self.feature_planes,checkpoint=checkpoint)
+        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, self.feature_planes,
+                                               checkpoint=checkpoint)
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                       n_playout=self.n_playout, is_selfplay=1)
 
@@ -205,7 +206,7 @@ class TrainPipeline():
         if kl > self.kl_targ * 2 and self.lr_multiplier > 0.1:
             self.lr_multiplier /= 1.5
         elif kl < self.kl_targ / 2 and self.lr_multiplier < 10:
-           self.lr_multiplier *= 1.5
+            self.lr_multiplier *= 1.5
         explained_var_old = 1 - np.var(np.array(winner_batch) - old_v.flatten()) / np.var(np.array(winner_batch))
         explained_var_new = 1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch))
         t2 = time.time()
@@ -237,7 +238,7 @@ class TrainPipeline():
             proc.start()
         self.eval_procs = procs
 
-    def get_win_ratio(self,search_depth=2):
+    def get_win_ratio(self, search_depth=2):
         self.job_queue_lock.acquire()
         for i in range(self.n_games_eval):
             self.job_queue.put(search_depth)
@@ -314,14 +315,14 @@ class TrainPipeline():
                             try:
                                 self.data_buffer.append(samples_holder.popleft())
                                 cnt = cnt + 1
-                                if cnt >= self.batch_size/2 and len(self.data_buffer) > self.batch_size:
+                                if cnt >= self.batch_size / 2 and len(self.data_buffer) > self.batch_size:
                                     t2 = time.time()
                                     print("batch i:{},collecting finished,samples:{},time_used:{:.3f}".format(
                                         i + 1, cnt, t2 - t1))
                                     break
                             except:
                                 break
-                        if cnt >= self.batch_size/2 and len(self.data_buffer) > self.batch_size:
+                        if cnt >= self.batch_size / 2 and len(self.data_buffer) > self.batch_size:
                             break
                         else:
                             t2 = time.time()
@@ -339,7 +340,7 @@ class TrainPipeline():
                             break
                 t2 = time.time()
                 print("batch i:{}, data_buffer_size:{},time_used:{:.3f}".format(i + 1, len(self.data_buffer), t2 - t1))
-                for i  in range(5):
+                for i in range(5):
                     try:
                         loss, entropy = self.policy_update()
                         break
