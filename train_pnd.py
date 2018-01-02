@@ -386,8 +386,8 @@ def parse_arguments():
 
 def main(args):
     if args.is_resume == '0':
-        if os.path.exists(args.model_file):
-            os.remove(args.model_file)
+        if os.path.exists('checkpoint.pth.tar'):
+            os.remove('checkpoint.pth.tar')
     if args.is_dist == '0':
         training_pipeline = TrainPipeline()
         print('start collecting')
