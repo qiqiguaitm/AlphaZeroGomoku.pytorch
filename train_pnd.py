@@ -344,7 +344,8 @@ class TrainPipeline():
                     try:
                         loss, entropy = self.policy_update()
                         break
-                    except:
+                    except Exception,e:
+                        print(e)
                         continue
                 state = {'state_dict': self.policy_value_net.policy_value_model.state_dict(),
                          'optim_dict': self.policy_value_net.optimizer.state_dict(),
