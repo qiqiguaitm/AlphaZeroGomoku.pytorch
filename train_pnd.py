@@ -312,7 +312,7 @@ class TrainPipeline():
                             try:
                                 self.data_buffer.append(samples_holder.popleft())
                                 cnt = cnt + 1
-                                if cnt >= self.batch_size/4:
+                                if cnt >= self.batch_size/4 and len(self.data_buffer) > self.batch_size:
                                     t2 = time.time()
                                     print("batch i:{},collecting finished,samples:{},time_used:{:.3f}".format(
                                         i + 1, cnt, t2 - t1))
