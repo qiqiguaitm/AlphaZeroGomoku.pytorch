@@ -141,7 +141,7 @@ class TrainPipeline():
         self.n_playout = 800  # num of simulations for each move
         self.c_puct = 5
 
-        self.batch_size = 512 * 4  # mini-batch size for training
+        self.batch_size = 3600  # mini-batch size for training
         self.buffer_size = self.batch_size * 20
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.play_batch_size = 1
@@ -314,14 +314,14 @@ class TrainPipeline():
                             try:
                                 self.data_buffer.append(samples_holder.popleft())
                                 cnt = cnt + 1
-                                if cnt >= self.batch_size/4 and len(self.data_buffer) > self.batch_size:
+                                if cnt >= self.batch_size/2 and len(self.data_buffer) > self.batch_size:
                                     t2 = time.time()
                                     print("batch i:{},collecting finished,samples:{},time_used:{:.3f}".format(
                                         i + 1, cnt, t2 - t1))
                                     break
                             except:
                                 break
-                        if cnt >= self.batch_size/4 and len(self.data_buffer) > self.batch_size:
+                        if cnt >= self.batch_size/2 and len(self.data_buffer) > self.batch_size:
                             break
                         else:
                             t2 = time.time()

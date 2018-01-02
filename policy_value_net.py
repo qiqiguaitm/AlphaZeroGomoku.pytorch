@@ -100,7 +100,46 @@ class PolicyValueNet(object):
         self.mode = mode
         self.l2_const = 1e-4  # coef of l2 penalty
         self.create_policy_value_net()
-        self.optimizer = optim.Adam(self.policy_value_model.parameters(), lr=3e-2)
+        self.optimizer = self.create_optimizer(self.policy_value_model,'sgd',lr=3e-2,weight_decay=self.l2_const)
+        #self.optimizer = optim.Adam(self.policy_value_model.parameters(), lr=3e-2,weight_decay=self.l2_const)
+
+    def create_optimizer(self,model, optimi_str, lr, weight_decay, args):
+        def group_weight(module, lr):
+            group_decay = []
+            group_no_decay = []
+            for name, para in model.named_parameters():
+                # if name.endswith('bias') or name.endswith('biases'):
+                #    group_no_decay.append(para)
+                if name.endswith('l2_alpha'):
+                    group_no_decay.append(para)
+                else:
+                    group_decay.append(para)
+            groups = [dict(params=group_decay, weight_decay=weight_decay, lr=lr),
+                      dict(params=group_no_decay, weight_decay=0.0, lr=lr)]
+            return groups
+
+        groups = group_weight(module=model, lr=lr)
+        # setup optimizer
+        if optimi_str == 'sgd':
+            optimizer = optim.SGD(groups, lr=lr,
+                                  momentum=0.9,
+                                  weight_decay=weight_decay, nesterov=True)
+        elif optimi_str == 'adam':
+            optimizer = optim.Adam(groups, lr=lr,
+                                   weight_decay=weight_decay, betas=(args.beta1, 0.999))
+        elif optimi_str == 'adagrad':
+            optimizer = optim.Adagrad(groups,
+                                      lr=lr,
+                                      lr_decay=args.lr_decay,
+                                      weight_decay=weight_decay)
+        elif optimi_str == 'rmsprop':
+            optimizer = optim.RMSprop(groups,
+                                      lr=lr,
+                                      alpha=0.99,
+                                      eps=1e-08,
+                                      weight_decay=weight_decay,
+                                      momentum=0, centered=False)
+        return optimizer
 
     def create_policy_value_net(self):
         self.policy_value_model = PolicyValueBackBoneNet(self.board_height * self.board_width,
