@@ -58,20 +58,10 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                           is_distributed=False, data_server_url=DIST_DATA_URL):
     """collect self-play data for training"""
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
-    #time.sleep(int(pid) * 5)
+    # time.sleep(int(pid) * 5)
     n_epoch = 0
+    checkpoint = None
     while True:
-        if os.path.exists(model_file):
-            while True:
-                try:
-                    if is_distributed:
-                        download(data_server_url, model_file, model_file)
-                    checkpoint = torch.load(model_file)
-                    break
-                except:
-                    continue
-        else:
-            checkpoint = None
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, mode='eval', checkpoint=checkpoint)
         mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
@@ -97,6 +87,14 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                 data_queue_lock.release()
             print('PID:%s,N_EPOCH:%s,N_GAME:%s send data end.' % (pid, n_epoch, n_game))
         n_epoch += 1
+        while True:
+            try:
+                if is_distributed:
+                    download(data_server_url, model_file, model_file)
+                checkpoint = torch.load(model_file)
+                break
+            except:
+                continue
 
 
 def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
@@ -118,7 +116,7 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
         refer_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
-        #refer_player = NegamaxPlayer(cmd_path='negamax/build/renju')
+        # refer_player = NegamaxPlayer(cmd_path='negamax/build/renju')
         winner = game.start_play(current_mcts_player, refer_player, start_player=role, is_shown=0)
         job_queue_lock.acquire()
         win_queue.put(winner)
@@ -139,8 +137,8 @@ class TrainPipeline():
         self.learn_rate = 5e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
-        #self.n_playout = 400  # num of simulations for each move
-        self.n_playout = 800  # num of simulations for each move
+        self.n_playout = 400  # num of simulations for each move
+        # self.n_playout = 800  # num of simulations for each move
         self.c_puct = 5
         self.buffer_size = 512 * 20
         self.batch_size = 512  # mini-batch size for training
@@ -200,11 +198,10 @@ class TrainPipeline():
         new_probs, new_v = new_probs.data.cpu().numpy(), new_v.data.cpu().numpy()
         kl = np.mean(np.sum(old_probs * (np.log(old_probs + 1e-10) - np.log(new_probs + 1e-10)), axis=1))
 
-
         # adaptively adjust the learning rate
         if kl > self.kl_targ * 2 and self.lr_multiplier > 0.1:
             self.lr_multiplier /= 1.5
-        #elif kl < self.kl_targ / 2 and self.lr_multiplier < 10:
+        # elif kl < self.kl_targ / 2 and self.lr_multiplier < 10:
         #    self.lr_multiplier *= 1.5
         elif kl < self.kl_targ / 2 and self.lr_multiplier < 1:
             self.lr_multiplier *= 1.5
@@ -258,7 +255,7 @@ class TrainPipeline():
         """run the training pipeline"""
         self.data_queue = self.manager.Queue(maxsize=5120)
         self.data_queue_lock = self.manager.Lock()
-        NUM_PROCESS = 8
+        NUM_PROCESS = 24
         procs = []
         for idx in range(NUM_PROCESS):
             gpu_id = self.gpus[self.num_inst % len(self.gpus)]
