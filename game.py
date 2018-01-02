@@ -221,9 +221,15 @@ class Game(object):
         """
         self.board.init_board()        
         p1, p2 = self.board.players
-        states, mcts_probs, current_players = [], [], []        
+        states, mcts_probs, current_players = [], [], []
+        move_for_annealing = 30*2
+        temp_for_anneling = 1e-3
         while(1):
-            move, move_probs = player.get_action(self.board, temp=temp, return_prob=1)
+            if move_for_annealing >= 0:
+                move, move_probs = player.get_action(self.board, temp=temp, return_prob=1)
+            else:
+                move, move_probs = player.get_action(self.board, temp=temp_for_anneling, return_prob=1)
+            move_for_annealing -= 1
             # store the data
             states.append(self.board.current_state())
             mcts_probs.append(move_probs)
