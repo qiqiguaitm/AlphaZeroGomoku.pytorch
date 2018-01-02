@@ -96,6 +96,7 @@ def collect_selfplay_data(pid, gpu_id, data_queue, data_queue_lock, game,
                 checkpoint = torch.load(model_file)
                 break
             except:
+                time.sleep(1)
                 continue
 
 
