@@ -354,7 +354,7 @@ class TrainPipeline():
                 shutil.move(self.model_file + '.undone', self.model_file)
                 # upload(data_server_url, self.model_file)
                 torch.save(state, self.model_file + '.undone')
-                shutil.copy(self.model_file + '.undone', os.path.join(TunnelPath, os.path.split(self.model_file)[-1]))
+                shutil.move(self.model_file + '.undone', os.path.join(TunnelPath, os.path.split(self.model_file)[-1]))
         except KeyboardInterrupt:
             print('\n\rquit')
 
