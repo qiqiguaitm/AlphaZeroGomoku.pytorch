@@ -103,7 +103,7 @@ class PolicyValueNet(object):
         self.optimizer = self.create_optimizer(self.policy_value_model,'sgd',lr=3e-2,weight_decay=self.l2_const)
         #self.optimizer = optim.Adam(self.policy_value_model.parameters(), lr=3e-2,weight_decay=self.l2_const)
 
-    def create_optimizer(self,model, optimi_str, lr, weight_decay, args):
+    def create_optimizer(self,model, optimi_str, lr, weight_decay, args={}):
         # setup optimizer
         if optimi_str == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=lr,
