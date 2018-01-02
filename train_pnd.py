@@ -152,6 +152,7 @@ class TrainPipeline():
         self.best_win_ratio = 0.0
         # num of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
         self.pure_mcts_playout_num = 1000
+        self.negamax_search_depth = 2
         self.gpus = ['0', '1', '2', '3']
         # self.gpus = ['0']
         # self.gpus = [str(i) for i in range(int(torch.cuda.device_count()))]
@@ -245,7 +246,7 @@ class TrainPipeline():
             win_cnt[winner] += 1
             print(i)
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / self.n_games_eval
-        print("num_playouts:{}, win: {}, lose: {}, tie:{}".format(search_depth, win_cnt[1], win_cnt[2],
+        print("search_depth:{}, win: {}, lose: {}, tie:{}".format(search_depth, win_cnt[1], win_cnt[2],
                                                                   win_cnt[-1]))
         return win_ratio
 
@@ -283,7 +284,7 @@ class TrainPipeline():
                     continue
             t1 = time.time()
             print("current self-play batch: {}, start to evaluate...".format(idx + 1))
-            win_ratio = self.get_win_ratio()
+            win_ratio = self.get_win_ratio(search_depth=self.negamax_search_depth)
             if win_ratio > self.best_win_ratio:
                 print("New best policy!!!!!!!!")
                 self.best_win_ratio = win_ratio

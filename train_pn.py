@@ -88,14 +88,14 @@ def policy_evaluate(gpu_id, win_queue, job_queue, job_queue_lock, game, role,
     while True:
         while job_queue.empty():
             time.sleep(1)
-        job_queue.get()
+        search_depth=job_queue.get()
         checkpoint = torch.load(model_file)
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         policy_value_net = PolicyValueNet(board_width, board_height, feature_planes, checkpoint=checkpoint)
         current_mcts_player = MCTSPlayer(policy_value_net.policy_value_fn, c_puct=c_puct,
                                          n_playout=n_playout)
         # refer_player = MCTS_Pure(c_puct=5, n_playout=pure_mcts_playout_num)
-        refer_player = NegamaxPlayer(cmd_path='negamax/build/renju')
+        refer_player = NegamaxPlayer(cmd_path='negamax/build/renju',search_depth=search_depth)
         winner = game.start_play(current_mcts_player, refer_player, start_player=role, is_shown=0)
         job_queue_lock.acquire()
         win_queue.put(winner)
@@ -210,10 +210,10 @@ class TrainPipeline():
             proc.start()
         self.eval_procs = procs
 
-    def get_win_ratio(self):
+    def get_win_ratio(self,search_depth=2):
         self.job_queue_lock.acquire()
         for i in range(self.n_games_eval):
-            self.job_queue.put(1)
+            self.job_queue.put(search_depth)
         self.job_queue_lock.release()
         win_cnt = defaultdict(int)
         for i in range(self.n_games_eval):
@@ -221,7 +221,7 @@ class TrainPipeline():
             win_cnt[winner] += 1
             print(i)
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / self.n_games_eval
-        print("num_playouts:{}, win: {}, lose: {}, tie:{}".format(self.pure_mcts_playout_num, win_cnt[1], win_cnt[2],
+        print("search_depth:{}, win: {}, lose: {}, tie:{}".format(search_depth, win_cnt[1], win_cnt[2],
                                                                   win_cnt[-1]))
         return win_ratio
 
@@ -269,12 +269,14 @@ class TrainPipeline():
                 if (i + 1) % self.check_freq == 0:
                     t1 = time.time()
                     print("current self-play batch: {}, start to evaluate...".format(i + 1))
-                    win_ratio = self.get_win_ratio()
+                    win_ratio = self.get_win_ratio(self.negamax_search_depth)
                     if win_ratio > self.best_win_ratio:
                         print("New best policy!!!!!!!!")
                         self.best_win_ratio = win_ratio
-                        if self.best_win_ratio == 1.0 and self.pure_mcts_playout_num < 5000:
-                            self.pure_mcts_playout_num += 1000
+                        if self.best_win_ratio == 1.0 and self.negamax_search_depth < 20 and self.negamax_search_depth != -1:
+                            self.negamax_search_depth += 2
+                            if self.negamax_search_depth >= 20:
+                                self.negamax_search_depth = -1
                             self.best_win_ratio = 0.0
                         torch.save(state, self.best_model_name)
                     t2 = time.time()
