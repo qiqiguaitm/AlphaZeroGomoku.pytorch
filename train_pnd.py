@@ -141,7 +141,7 @@ class TrainPipeline():
         # self.n_playout = 800  # num of simulations for each move
         self.c_puct = 5
         self.buffer_size = 512 * 20
-        self.batch_size = 512  # mini-batch size for training
+        self.batch_size = 512 * 4  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.play_batch_size = 1
         self.epochs = 5  # num of train_steps for each update
@@ -201,10 +201,8 @@ class TrainPipeline():
         # adaptively adjust the learning rate
         if kl > self.kl_targ * 2 and self.lr_multiplier > 0.1:
             self.lr_multiplier /= 1.5
-        # elif kl < self.kl_targ / 2 and self.lr_multiplier < 10:
-        #    self.lr_multiplier *= 1.5
-        elif kl < self.kl_targ / 2 and self.lr_multiplier < 1:
-            self.lr_multiplier *= 1.5
+        elif kl < self.kl_targ / 2 and self.lr_multiplier < 10:
+           self.lr_multiplier *= 1.5
         explained_var_old = 1 - np.var(np.array(winner_batch) - old_v.flatten()) / np.var(np.array(winner_batch))
         explained_var_new = 1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch))
         t2 = time.time()
@@ -311,7 +309,7 @@ class TrainPipeline():
                             try:
                                 self.data_buffer.append(samples_holder.popleft())
                                 cnt = cnt + 1
-                                if cnt >= self.batch_size:
+                                if cnt >= self.batch_size/4:
                                     t2 = time.time()
                                     print("batch i:{},collecting finished,samples:{},time_used:{:.3f}".format(
                                         i + 1, cnt, t2 - t1))
