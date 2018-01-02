@@ -159,13 +159,14 @@ class TrainPipeline():
         self.num_inst = 0
         self.model_file = 'checkpoint.pth.tar'
         self.best_model_file = 'checkpoint_best.pth.tar'
-        if os.path.exists(self.model_file):
-            os.remove(self.model_file)
         self.manager = multiprocessing.Manager()
 
     def init_model(self):
         os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.gpus)
-        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, self.feature_planes)
+        checkpoint = None
+        if os.path.exists(self.model_file):
+            checkpoint = torch.load(self.model_file)
+        self.policy_value_net = PolicyValueNet(self.board_width, self.board_height, self.feature_planes,checkpoint=checkpoint)
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
                                       n_playout=self.n_playout, is_selfplay=1)
 
@@ -376,11 +377,17 @@ def parse_arguments():
     parser.add_argument('--data_server_url', metavar='URL', default=DIST_DATA_URL,
                         type=str,
                         help='data_server_url')
+    parser.add_argument('--is_resume', metavar='RESUME', default='0',
+                        choices=['1', '0'],
+                        help='run mode: dist or local')
     args = parser.parse_args()
     return args
 
 
 def main(args):
+    if args.is_resume == '0':
+        if os.path.exists(args.model_file):
+            os.remove(args.model_file)
     if args.is_dist == '0':
         training_pipeline = TrainPipeline()
         print('start collecting')
