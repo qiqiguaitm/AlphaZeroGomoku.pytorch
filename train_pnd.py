@@ -255,7 +255,7 @@ class TrainPipeline():
         """run the training pipeline"""
         self.data_queue = self.manager.Queue(maxsize=5120)
         self.data_queue_lock = self.manager.Lock()
-        NUM_PROCESS = 8
+        NUM_PROCESS = 24
         procs = []
         for idx in range(NUM_PROCESS):
             gpu_id = self.gpus[self.num_inst % len(self.gpus)]
