@@ -319,7 +319,7 @@ class TrainPipeline():
                                     break
                             except:
                                 break
-                        if cnt >= self.batch_size:
+                        if cnt >= self.batch_size/4 and len(self.data_buffer) > self.batch_size:
                             break
                         else:
                             t2 = time.time()
