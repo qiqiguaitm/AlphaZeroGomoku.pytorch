@@ -215,7 +215,7 @@ class Game(object):
                 return winner   
             
             
-    def start_self_play(self, player, is_shown=0, temp=1e-3):
+    def start_self_play(self, player, is_shown=0, temp=1e-6):
         """ start a self-play game using a MCTS player, reuse the search tree
         store the self-play data: (state, mcts_probs, z)
         """
@@ -223,7 +223,7 @@ class Game(object):
         p1, p2 = self.board.players
         states, mcts_probs, current_players = [], [], []
         move_for_annealing = 30*2
-        temp_for_anneling = 1e-3
+        temp_for_anneling = 1e-6
         while(1):
             if move_for_annealing >= 0:
                 move, move_probs = player.get_action(self.board, temp=temp, return_prob=1)
