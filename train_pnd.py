@@ -32,7 +32,7 @@ from dist.data_server import *
 
 
 DIST_DATA_URL = 'http://10.93.189.54:8000/'
-BOARD_SIZE = 19
+BOARD_SIZE = 11
 
 
 def get_equi_data(play_data, board_height, board_width):
@@ -140,11 +140,11 @@ class TrainPipeline():
         self.learn_rate = 5e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
-        self.n_playout = 800  # num of simulations for each move
+        self.n_playout = 1600  # num of simulations for each move
         #self.n_playout = 1600  # num of simulations for each move
         self.c_puct = 5
 
-        self.batch_size = 3200  # mini-batch size for training
+        self.batch_size = 4096  # mini-batch size for training
         self.buffer_size = self.batch_size * 20
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.play_batch_size = 1
